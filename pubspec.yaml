@@ -1,0 +1,80 @@
+name: ludo_tournament_app
+description: A full-featured Ludo app with Tournament Mode - inspired by Ludo King
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+  flutter: ">=3.10.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # State Management
+  flutter_riverpod: ^2.4.9
+  riverpod_annotation: ^2.3.3
+
+  # Navigation
+  go_router: ^12.1.3
+
+  # Animations
+  flutter_animate: ^4.3.0
+  lottie: ^2.7.0
+
+  # Audio
+  audioplayers: ^5.2.1
+
+  # Storage
+  hive_flutter: ^1.1.0
+  hive: ^2.2.3
+  shared_preferences: ^2.2.2
+
+  # UI & Utils
+  google_fonts: ^6.1.0
+  flutter_svg: ^2.0.9
+  cached_network_image: ^3.3.1
+  uuid: ^4.2.2
+  equatable: ^2.0.5
+  collection: ^1.18.0
+  intl: ^0.19.0
+  confetti: ^0.7.0
+
+  # Networking (for LAN/Hotspot mode)
+  web_socket_channel: ^2.4.0
+  shelf: ^1.4.1
+  shelf_web_socket: ^1.0.4
+  network_info_plus: ^4.1.0
+  qr_flutter: ^4.1.0
+  mobile_scanner: ^3.5.6
+
+  # Connectivity
+  connectivity_plus: ^5.0.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  riverpod_generator: ^2.3.9
+  build_runner: ^2.4.7
+  flutter_lints: ^3.0.1
+  hive_generator: ^2.0.1
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/audio/
+
+  fonts:
+    - family: Fredoka
+      fonts:
+        - asset: assets/fonts/Fredoka-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Fredoka-Bold.ttf
+          weight: 700
+    - family: Nunito
+      fonts:
+        - asset: assets/fonts/Nunito-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Nunito-Bold.ttf
+          weight: 700

@@ -89,10 +89,10 @@ class HomeScreen extends ConsumerWidget {
           isFeature: true),
       _MenuItem('vs Computer', '🤖', AppColors.redPlayer,
           'Easy / Medium / Hard AI', () => _goToLobby(context, 'ai')),
+      _MenuItem('Hotspot LAN', '📡', const Color(0xFF00838F),
+          'Multiplayer over WiFi', () => _showHotspotDialog(context)),
       _MenuItem('Leaderboard', '📊', const Color(0xFF00BCD4),
-          'Global rankings', () {}),
-      _MenuItem('Achievements', '🎖️', const Color(0xFFFF5722),
-          'Your badges & rewards', () {}),
+          'Global rankings', () => context.push('/leaderboard')),
     ];
 
     return Padding(

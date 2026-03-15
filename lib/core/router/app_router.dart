@@ -15,6 +15,8 @@ import '../../screens/game/game_screen.dart';
 import '../../screens/game/result_screen.dart';
 import '../../screens/tournament/tournament_setup_screen.dart';
 import '../../screens/tournament/tournament_bracket_screen.dart';
+import '../../screens/online/online_auth_screen.dart';
+import '../../screens/online/online_lobby_screen.dart';
 import '../../screens/settings/settings_screen.dart';
 import '../../screens/settings/profile_screen.dart';
 
@@ -96,6 +98,22 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/tournament/history',
         name: 'tournament-history',
         builder: (context, state) => const TournamentHistoryScreen(),
+      ),
+      GoRoute(
+        path: '/online/auth',
+        name: 'online-auth',
+        builder: (context, state) => const OnlineAuthScreen(),
+      ),
+      GoRoute(
+        path: '/online/lobby',
+        name: 'online-lobby',
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          return OnlineLobbyScreen(
+            isHost: extra?['isHost'] as bool? ?? true,
+            joinCode: extra?['code'] as String?,
+          );
+        },
       ),
       GoRoute(
         path: '/settings',

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_theme.dart';
+import '../../widgets/common/hotspot_dialog.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -128,6 +129,12 @@ class HomeScreen extends ConsumerWidget {
   }
 
   void _goToLobby(BuildContext context, String mode) {
+    context.push('/lobby', extra: {'mode': mode});
+  }
+
+  void _showHotspotDialog(BuildContext context) {
+    showHotspotDialog(context);
+  }
     context.push('/lobby', extra: {'mode': mode});
   }
 }

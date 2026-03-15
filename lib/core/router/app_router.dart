@@ -6,8 +6,11 @@ import 'package:go_router/go_router.dart';
 import '../../screens/home/home_screen.dart';
 import '../../screens/home/splash_screen.dart';
 import '../../screens/home/leaderboard_screen.dart';
+import '../../screens/home/shop_screen.dart';
+import '../../screens/home/daily_reward_screen.dart';
 import '../../screens/game/game_lobby_screen.dart';
 import '../../screens/game/hotspot_lobby_screen.dart';
+import '../../screens/tournament/tournament_history_screen.dart';
 import '../../screens/game/game_screen.dart';
 import '../../screens/game/result_screen.dart';
 import '../../screens/tournament/tournament_setup_screen.dart';
@@ -78,6 +81,21 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           final extra = state.extra as Map<String, dynamic>?;
           return TournamentBracketScreen(tournamentId: extra?['id'] ?? '');
         },
+      ),
+      GoRoute(
+        path: '/shop',
+        name: 'shop',
+        builder: (context, state) => const ShopScreen(),
+      ),
+      GoRoute(
+        path: '/daily-reward',
+        name: 'daily-reward',
+        builder: (context, state) => const DailyRewardScreen(),
+      ),
+      GoRoute(
+        path: '/tournament/history',
+        name: 'tournament-history',
+        builder: (context, state) => const TournamentHistoryScreen(),
       ),
       GoRoute(
         path: '/settings',

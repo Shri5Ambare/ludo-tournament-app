@@ -4,9 +4,9 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/settings_provider.dart';
+import '../../widgets/common/board_theme_selector.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -30,170 +30,153 @@ class SettingsScreen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          _Section(title: 'Audio', children: [
-            _ToggleTile(
-              icon: Icons.volume_up_rounded,
-              label: 'Sound Effects',
-              value: settings.soundEnabled,
-              onToggle: () => ref.read(settingsProvider.notifier).toggleSound(),
+          _SectionHeader(title: '🔊 Audio'),
+          _ToggleTile(
+            icon: Icons.volume_up_rounded,
+            label: 'Sound Effects',
+            subtitle: 'Dice rolls, token moves, cuts',
+            value: settings.soundEnabled,
+            onChanged: (_) => ref.read(settingsProvider.notifier).toggleSound(),
+          ).animate(delay: 50.ms).fadeIn(),
+          _ToggleTile(
+            icon: Icons.music_note_rounded,
+            label: 'Background Music',
+            subtitle: 'In-game music',
+            value: settings.musicEnabled,
+            onChanged: (_) => ref.read(settingsProvider.notifier).toggleMusic(),
+          ).animate(delay: 100.ms).fadeIn(),
+          _ToggleTile(
+            icon: Icons.vibration_rounded,
+            label: 'Vibration',
+            subtitle: 'Haptic feedback',
+            value: settings.vibrationEnabled,
+            onChanged: (_) => ref.read(settingsProvider.notifier).toggleVibration(),
+          ).animate(delay: 150.ms).fadeIn(),
+
+          const SizedBox(height: 24),
+          _SectionHeader(title: '🎨 Appearance'),
+          _ToggleTile(
+            icon: Icons.dark_mode_rounded,
+            label: 'Dark Mode',
+            subtitle: 'Toggle dark/light theme',
+            value: themeMode == ThemeMode.dark,
+            onChanged: (_) => ref.read(themeModeProvider.notifier).toggle(),
+          ).animate(delay: 200.ms).fadeIn(),
+          const SizedBox(height: 16),
+          const BoardThemeSelector().animate(delay: 250.ms).fadeIn(),
+
+          const SizedBox(height: 24),
+          _SectionHeader(title: '⏱️ Turn Timer'),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.darkCard,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.darkBorder),
             ),
-            _ToggleTile(
-              icon: Icons.music_note_rounded,
-              label: 'Background Music',
-              value: settings.musicEnabled,
-              onToggle: () => ref.read(settingsProvider.notifier).toggleMusic(),
+            child: Row(
+              children: [15, 30, 45].map((secs) {
+                final sel = settings.turnTimerSeconds == secs;
+                return Padding(
+                  padding: const EdgeInsets.only(right: 10),
+                  child: GestureDetector(
+                    onTap: () => ref.read(settingsProvider.notifier).setTurnTimer(secs),
+                    child: AnimatedContainer(
+                      duration: 200.ms,
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(10),
+                        color: sel ? AppColors.accent.withOpacity(0.15) : AppColors.darkBg,
+                        border: Border.all(color: sel ? AppColors.accent : AppColors.darkBorder),
+                      ),
+                      child: Text('${secs}s',
+                          style: GoogleFonts.fredoka(
+                              fontSize: 16,
+                              color: sel ? AppColors.accent : Colors.white60)),
+                    ),
+                  ),
+                );
+              }).toList(),
             ),
-          ]),
-          const SizedBox(height: 20),
-          _Section(title: 'Haptics', children: [
-            _ToggleTile(
-              icon: Icons.vibration_rounded,
-              label: 'Vibration',
-              value: settings.vibrationEnabled,
-              onToggle: () => ref.read(settingsProvider.notifier).toggleVibration(),
+          ).animate(delay: 300.ms).fadeIn(),
+
+          const SizedBox(height: 24),
+          _SectionHeader(title: 'ℹ️ About'),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.darkCard,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.darkBorder),
             ),
-          ]),
-          const SizedBox(height: 20),
-          _Section(title: 'Appearance', children: [
-            _ToggleTile(
-              icon: Icons.dark_mode_rounded,
-              label: 'Dark Mode',
-              value: themeMode == ThemeMode.dark,
-              onToggle: () => ref.read(themeModeProvider.notifier).toggle(),
+            child: Column(
+              children: [
+                _AboutRow(label: 'Version', value: '1.0.0'),
+                const Divider(color: AppColors.darkBorder, height: 20),
+                _AboutRow(label: 'Developer', value: 'SSiT Nexus'),
+                const Divider(color: AppColors.darkBorder, height: 20),
+                _AboutRow(label: 'Website', value: 'ssitnexus.com'),
+                const Divider(color: AppColors.darkBorder, height: 20),
+                _AboutRow(label: 'Framework', value: 'Flutter 3.x'),
+              ],
             ),
-          ]),
-          const SizedBox(height: 20),
-          _Section(title: 'Board Theme', children: [
-            _BoardThemeSelector(
-              current: settings.boardTheme,
-              onSelect: (t) => ref.read(settingsProvider.notifier).setBoardTheme(t),
-            ),
-          ]),
-          const SizedBox(height: 20),
-          _Section(title: 'About', children: [
-            _InfoTile(label: 'Version', value: '1.0.0'),
-            _InfoTile(label: 'Developer', value: 'SSiT Nexus'),
-            _InfoTile(label: 'Website', value: 'ssitnexus.com'),
-          ]),
+          ).animate(delay: 350.ms).fadeIn(),
+          const SizedBox(height: 32),
         ],
       ),
     );
   }
 }
 
-class _Section extends StatelessWidget {
+class _SectionHeader extends StatelessWidget {
   final String title;
-  final List<Widget> children;
-  const _Section({required this.title, required this.children});
-
+  const _SectionHeader({required this.title});
   @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(title,
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: Text(title,
             style: GoogleFonts.fredoka(
-                fontSize: 17, color: AppColors.textMuted))
-            .animate().fadeIn(),
-        const SizedBox(height: 8),
-        Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            color: AppColors.darkCard,
-            border: Border.all(color: AppColors.darkBorder),
-          ),
-          child: Column(children: children),
-        ).animate().slideY(begin: 0.1).fadeIn(),
-      ],
-    );
-  }
+                fontSize: 17, color: Colors.white, fontWeight: FontWeight.bold)),
+      );
 }
 
 class _ToggleTile extends StatelessWidget {
   final IconData icon;
   final String label;
+  final String subtitle;
   final bool value;
-  final VoidCallback onToggle;
-  const _ToggleTile({
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.onToggle,
-  });
-
+  final ValueChanged<bool> onChanged;
+  const _ToggleTile({required this.icon, required this.label, required this.subtitle, required this.value, required this.onChanged});
   @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      leading: Icon(icon, color: value ? AppColors.primary : Colors.white38),
-      title: Text(label,
-          style: GoogleFonts.nunito(color: Colors.white, fontSize: 15)),
-      trailing: Switch(
-        value: value,
-        onChanged: (_) => onToggle(),
-        activeColor: AppColors.primary,
-      ),
-    );
-  }
+  Widget build(BuildContext context) => Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        decoration: BoxDecoration(
+          color: AppColors.darkCard,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.darkBorder),
+        ),
+        child: SwitchListTile(
+          secondary: Icon(icon, color: value ? AppColors.primary : AppColors.textMuted),
+          title: Text(label, style: GoogleFonts.fredoka(fontSize: 15, color: Colors.white)),
+          subtitle: Text(subtitle, style: GoogleFonts.nunito(fontSize: 11, color: AppColors.textMuted)),
+          value: value,
+          onChanged: onChanged,
+          activeColor: AppColors.primary,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        ),
+      );
 }
 
-class _BoardThemeSelector extends StatelessWidget {
-  final String current;
-  final Function(String) onSelect;
-  const _BoardThemeSelector({required this.current, required this.onSelect});
-
-  @override
-  Widget build(BuildContext context) {
-    final themes = [
-      ('classic', '♟️', 'Classic'),
-      ('neon', '💜', 'Neon'),
-      ('space', '🚀', 'Space'),
-      ('forest', '🌿', 'Forest'),
-      ('diwali', '🪔', 'Diwali'),
-    ];
-    return Padding(
-      padding: const EdgeInsets.all(12),
-      child: Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        children: themes.map((t) {
-          final sel = current == t.$1;
-          return GestureDetector(
-            onTap: () => onSelect(t.$1),
-            child: AnimatedContainer(
-              duration: 200.ms,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10),
-                color: sel ? AppColors.primary.withOpacity(0.2) : Colors.transparent,
-                border: Border.all(
-                    color: sel ? AppColors.primary : AppColors.darkBorder),
-              ),
-              child: Text('${t.$2} ${t.$3}',
-                  style: GoogleFonts.nunito(
-                      fontSize: 13,
-                      color: sel ? Colors.white : Colors.white60,
-                      fontWeight: sel ? FontWeight.bold : FontWeight.normal)),
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
-}
-
-class _InfoTile extends StatelessWidget {
+class _AboutRow extends StatelessWidget {
   final String label;
   final String value;
-  const _InfoTile({required this.label, required this.value});
-
+  const _AboutRow({required this.label, required this.value});
   @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      title: Text(label,
-          style: GoogleFonts.nunito(color: Colors.white70, fontSize: 14)),
-      trailing: Text(value,
-          style: GoogleFonts.nunito(
-              color: AppColors.primary, fontSize: 14, fontWeight: FontWeight.bold)),
-    );
-  }
+  Widget build(BuildContext context) => Row(
+        children: [
+          Text(label, style: GoogleFonts.nunito(fontSize: 13, color: AppColors.textMuted)),
+          const Spacer(),
+          Text(value, style: GoogleFonts.nunito(fontSize: 13, color: Colors.white, fontWeight: FontWeight.bold)),
+        ],
+      );
 }

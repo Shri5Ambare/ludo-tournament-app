@@ -5,7 +5,6 @@ import '../models/game_models.dart';
 import '../game_engine/game_engine.dart';
 import '../ai/ai_engine.dart';
 import '../core/constants/app_constants.dart';
-import 'settings_provider.dart';
 
 // ─────────────────────────────────────────────
 // Game Provider

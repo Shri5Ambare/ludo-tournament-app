@@ -92,8 +92,8 @@ class HomeScreen extends ConsumerWidget {
           'Easy / Medium / Hard AI', () => _goToLobby(context, 'ai')),
       _MenuItem('Hotspot LAN', '📡', const Color(0xFF00838F),
           'Multiplayer over WiFi', () => _showHotspotDialog(context)),
-      _MenuItem('Leaderboard', '📊', const Color(0xFF00BCD4),
-          'Global rankings', () => context.push('/leaderboard')),
+      _MenuItem('🌐 Online', '🌐', const Color(0xFF6A1B9A),
+          'Play worldwide', () => context.push('/online/auth')),
     ];
 
     return Padding(
@@ -119,11 +119,37 @@ class HomeScreen extends ConsumerWidget {
   }
 
   Widget _buildFooter(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Text(
-        'SSiT Nexus • Building Tomorrow\'s Technology Today',
-        style: GoogleFonts.nunito(fontSize: 11, color: AppColors.textMuted),
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+      decoration: BoxDecoration(
+        border: Border(
+          top: BorderSide(color: AppColors.darkBorder.withOpacity(0.5)),
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          _footerBtn(context, '🎁', 'Daily', () => context.push('/daily-reward')),
+          _footerBtn(context, '📊', 'Rankings', () => context.push('/leaderboard')),
+          _footerBtn(context, '🛒', 'Shop', () => context.push('/shop')),
+          _footerBtn(context, '🏟️', 'History', () => context.push('/tournament/history')),
+        ],
+      ),
+    );
+  }
+
+  Widget _footerBtn(BuildContext context, String emoji, String label, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(emoji, style: const TextStyle(fontSize: 22)),
+          const SizedBox(height: 2),
+          Text(label,
+              style: GoogleFonts.nunito(
+                  fontSize: 10, color: AppColors.textMuted)),
+        ],
       ),
     );
   }
@@ -134,8 +160,6 @@ class HomeScreen extends ConsumerWidget {
 
   void _showHotspotDialog(BuildContext context) {
     showHotspotDialog(context);
-  }
-    context.push('/lobby', extra: {'mode': mode});
   }
 }
 

@@ -54,3 +54,5 @@ Thumbs.db
 # Hive
 *.hive
 *.lock
+android/keystore/
+*.jks

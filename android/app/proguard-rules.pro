@@ -29,6 +29,18 @@
 # ── Keep model classes ────────────────────────────────────────────────────────
 -keep class com.ssitnexus.ludo_tournament_app.** { *; }
 
+# ── Supabase / Realtime ───────────────────────────────────────────────────────
+-keep class io.supabase.** { *; }
+-keep class com.supabase.** { *; }
+# OkHttp (used by supabase_flutter WebSocket)
+-keep class okhttp3.** { *; }
+-keep interface okhttp3.** { *; }
+-dontwarn okhttp3.**
+-dontwarn okio.**
+
+# ── AudioPlayers ──────────────────────────────────────────────────────────────
+-keep class xyz.luan.audioplayers.** { *; }
+
 # ── General ───────────────────────────────────────────────────────────────────
 -keepattributes Signature
 -keepattributes *Annotation*

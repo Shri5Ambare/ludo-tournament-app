@@ -20,6 +20,7 @@ import '../../screens/online/online_lobby_screen.dart';
 import '../../screens/settings/settings_screen.dart';
 import '../../screens/settings/profile_screen.dart';
 import '../../screens/social/friends_screen.dart';
+import '../../screens/social/spectator_screen.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -134,6 +135,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           return FriendsScreen(
             activeRoomCode: extra?['roomCode'] as String?,
             activeGameMode: extra?['gameMode'] as String?,
+          );
+        },
+      ),
+      GoRoute(
+        path: '/spectate',
+        name: 'spectate',
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          return SpectatorScreen(
+            roomCode: extra?['roomCode'] as String? ?? '',
+            myUsername: extra?['username'] as String?,
+            myAvatarEmoji: extra?['avatarEmoji'] as String?,
+            myId: extra?['myId'] as String?,
           );
         },
       ),

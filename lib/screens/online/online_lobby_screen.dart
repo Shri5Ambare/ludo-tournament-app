@@ -454,6 +454,26 @@ class _OnlineLobbyScreenState extends ConsumerState<OnlineLobbyScreen> {
               ],
             ),
           ),
+          const SizedBox(height: 12),
+          // Spectate option
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () => context.push('/spectate', extra: {
+                'roomCode': _room!.code,
+              }),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.white54,
+                side: BorderSide(color: Colors.white12),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+              ),
+              icon: const Text('👀', style: TextStyle(fontSize: 16)),
+              label: Text('Spectate Instead',
+                  style: GoogleFonts.nunito(fontSize: 13, color: Colors.white54)),
+            ),
+          ),
         ],
       ],
     );

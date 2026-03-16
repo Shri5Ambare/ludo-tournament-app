@@ -279,7 +279,14 @@ class _FriendTile extends ConsumerWidget {
           trailing: inviteMode
               ? _InviteButton(friend: friend, roomCode: activeRoomCode!, gameMode: activeGameMode ?? 'classic')
               : friend.status == FriendStatus.inGame && friend.currentRoomCode != null
-                  ? _JoinButton(roomCode: friend.currentRoomCode!)
+                  ? Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _JoinButton(roomCode: friend.currentRoomCode!),
+                        const SizedBox(width: 6),
+                        _WatchButton(roomCode: friend.currentRoomCode!),
+                      ],
+                    )
                   : const SizedBox(width: 8),
         ),
       ),
@@ -364,6 +371,32 @@ class _InviteButtonState extends ConsumerState<_InviteButton> {
                 _sent ? '✓ Sent' : '📨 Invite',
                 style: GoogleFonts.fredoka(fontSize: 13),
               ),
+      ),
+    );
+  }
+}
+
+// ─── Watch button (spectate friend's game) ───────────────────────────────────
+
+class _WatchButton extends StatelessWidget {
+  final String roomCode;
+  const _WatchButton({required this.roomCode});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        context.push('/spectate', extra: {'roomCode': roomCode});
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.06),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: Colors.white12),
+        ),
+        child: Text('👀', style: GoogleFonts.nunito(fontSize: 15)),
       ),
     );
   }

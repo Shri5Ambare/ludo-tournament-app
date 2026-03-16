@@ -19,6 +19,7 @@ import '../../screens/online/online_auth_screen.dart';
 import '../../screens/online/online_lobby_screen.dart';
 import '../../screens/settings/settings_screen.dart';
 import '../../screens/settings/profile_screen.dart';
+import '../../screens/social/friends_screen.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -124,6 +125,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/profile',
         name: 'profile',
         builder: (context, state) => const ProfileScreen(),
+      ),
+      GoRoute(
+        path: '/friends',
+        name: 'friends',
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          return FriendsScreen(
+            activeRoomCode: extra?['roomCode'] as String?,
+            activeGameMode: extra?['gameMode'] as String?,
+          );
+        },
       ),
     ],
     errorBuilder: (context, state) => Scaffold(

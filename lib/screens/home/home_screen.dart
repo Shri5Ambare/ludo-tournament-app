@@ -131,6 +131,7 @@ class HomeScreen extends ConsumerWidget {
         children: [
           _footerBtn(context, '🎁', 'Daily', () => context.push('/daily-reward')),
           _footerBtn(context, '📊', 'Rankings', () => context.push('/leaderboard')),
+          _footerBtn(context, '👥', 'Friends', () => context.push('/friends')),
           _footerBtn(context, '🛒', 'Shop', () => context.push('/shop')),
           _footerBtn(context, '🏟️', 'History', () => context.push('/tournament/history')),
         ],

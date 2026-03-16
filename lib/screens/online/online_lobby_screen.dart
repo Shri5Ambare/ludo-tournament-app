@@ -285,6 +285,28 @@ class _OnlineLobbyScreenState extends ConsumerState<OnlineLobbyScreen> {
 
         const SizedBox(height: 24),
 
+        // Invite Friends button
+        SizedBox(
+          width: double.infinity,
+          height: 46,
+          child: OutlinedButton.icon(
+            onPressed: () => context.push('/friends', extra: {
+              'roomCode': room.code,
+              'gameMode': room.gameMode,
+            }),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.primaryLight,
+              side: BorderSide(color: AppColors.primary.withOpacity(0.5)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            ),
+            icon: const Text('📨', style: TextStyle(fontSize: 18)),
+            label: Text('Invite Friends',
+                style: GoogleFonts.fredoka(fontSize: 16, color: AppColors.primaryLight)),
+          ),
+        ).animate(delay: 200.ms).fadeIn(),
+
+        const SizedBox(height: 12),
+
         SizedBox(
           width: double.infinity,
           height: 54,

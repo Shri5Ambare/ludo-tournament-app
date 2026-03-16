@@ -1,4 +1,5 @@
 // lib/widgets/board/ludo_board_widget.dart
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/board_paths.dart';
@@ -342,7 +343,7 @@ class LudoBoardPainter extends CustomPainter {
     final paint = Paint()..color = color;
     final path = Path();
     for (int i = 0; i < 5; i++) {
-      final angle = (i * 4 * 3.14159265) / 5 - 3.14159265 / 2;
+      final angle = (i * 4 * pi) / 5 - pi / 2;
       final x = center.dx + radius * cos(angle);
       final y = center.dy + radius * sin(angle);
       if (i == 0) path.moveTo(x, y);
@@ -352,29 +353,21 @@ class LudoBoardPainter extends CustomPainter {
     canvas.drawPath(path, paint);
   }
 
-  double cos(double radians) => _cos(radians);
-  double sin(double radians) => _sin(radians);
+  double cos(double r) => math_cos(r);
+  double sin(double r) => math_sin(r);
 
-  static double _cos(double r) {
-    // Simple Taylor series approximation for cos
-    r = r % (2 * 3.14159265);
-    double result = 1;
-    double term = 1;
-    for (int i = 1; i <= 10; i++) {
-      term *= -r * r / ((2 * i - 1) * (2 * i));
-      result += term;
-    }
+  static double math_cos(double r) => _mathCos(r);
+  static double math_sin(double r) => _mathSin(r);
+  static double _mathCos(double r) {
+    r = r % (2 * pi);
+    double result = 1, term = 1;
+    for (int i = 1; i <= 10; i++) { term *= -r * r / ((2*i-1) * (2*i)); result += term; }
     return result;
   }
-
-  static double _sin(double r) {
-    r = r % (2 * 3.14159265);
-    double result = r;
-    double term = r;
-    for (int i = 1; i <= 10; i++) {
-      term *= -r * r / ((2 * i) * (2 * i + 1));
-      result += term;
-    }
+  static double _mathSin(double r) {
+    r = r % (2 * pi);
+    double result = r, term = r;
+    for (int i = 1; i <= 10; i++) { term *= -r * r / ((2*i) * (2*i+1)); result += term; }
     return result;
   }
 

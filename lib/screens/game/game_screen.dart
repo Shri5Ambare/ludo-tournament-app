@@ -1,5 +1,6 @@
 // lib/screens/game/game_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -7,7 +8,9 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/game_models.dart';
 import '../../providers/game_provider.dart';
+import '../../providers/tournament_provider.dart';
 import '../../widgets/board/ludo_board_widget.dart';
+import '../../widgets/common/event_log_widget.dart';
 import '../../widgets/dice/dice_widget.dart';
 
 class GameScreen extends ConsumerStatefulWidget {
@@ -19,18 +22,36 @@ class GameScreen extends ConsumerStatefulWidget {
 }
 
 class _GameScreenState extends ConsumerState<GameScreen> {
+  bool _navigated = false;
+
+  // Tournament context from config
+  int? get _tournamentGroupIndex =>
+      widget.config['tournamentGroupIndex'] as int?;
+  bool get _isFinals => widget.config['isFinals'] as bool? ?? false;
+  bool get _isTournamentGame =>
+      _tournamentGroupIndex != null || _isFinals;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final configs = widget.config['playerConfigs'] as List<Map<String, dynamic>>?
-          ?? [{'name': 'Player 1', 'type': PlayerType.human},
-              {'name': 'Bot 1', 'type': PlayerType.ai}];
+      // Fix: playerConfigs key was inconsistent across callers — support both keys
+      final configs = (widget.config['playerConfigs'] ??
+              widget.config['players']) as List?;
+      final playerConfigs = configs
+              ?.map((e) => Map<String, dynamic>.from(e as Map))
+              .toList() ??
+          [
+            {'name': 'Player 1', 'type': PlayerType.human, 'avatar': '🧑'},
+            {'name': 'Bot 1', 'type': PlayerType.ai, 'avatar': '🤖'},
+          ];
+
       ref.read(gameProvider.notifier).initGame(
-        playerConfigs: configs,
-        gameMode: widget.config['gameMode'] as String? ?? GameMode.classic,
-        turnTimerSeconds: widget.config['turnTimerSeconds'] as int? ?? 30,
-      );
+            playerConfigs: playerConfigs,
+            gameMode: widget.config['gameMode'] as String? ?? GameMode.classic,
+            turnTimerSeconds:
+                widget.config['turnTimerSeconds'] as int? ?? 30,
+          );
     });
   }
 
@@ -45,16 +66,38 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       );
     }
 
-    // Navigate to result when game is over
-    if (gameState.isFinished) {
+    // ── Navigate to result when finished (only once) ──
+    if (gameState.isFinished && !_navigated) {
+      _navigated = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          context.pushReplacement('/result', extra: {
-            'players': gameState.rankedPlayers
-                .map((p) => {'name': p.name, 'rank': p.rank, 'color': p.index})
-                .toList(),
-          });
+        if (!mounted) return;
+        final ranked = gameState.rankedPlayers;
+        final winnerName = ranked.isNotEmpty ? ranked.first.name : '';
+
+        // If part of a tournament, notify provider before going to result
+        if (_isTournamentGame) {
+          final t = ref.read(tournamentProvider);
+          if (t != null && winnerName.isNotEmpty) {
+            if (_isFinals) {
+              ref
+                  .read(tournamentProvider.notifier)
+                  .completeFinals(winnerName);
+            } else if (_tournamentGroupIndex != null) {
+              ref
+                  .read(tournamentProvider.notifier)
+                  .completeGroupGame(_tournamentGroupIndex!, winnerName);
+            }
+          }
         }
+
+        context.pushReplacement('/result', extra: {
+          'players': ranked
+              .map((p) => {'name': p.name, 'rank': p.rank, 'color': p.index})
+              .toList(),
+          'isTournamentGame': _isTournamentGame,
+          'tournamentGroupIndex': _tournamentGroupIndex,
+          'isFinals': _isFinals,
+        });
       });
     }
 
@@ -64,11 +107,19 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         child: Column(
           children: [
             _buildTopBar(context, gameState),
-            _buildPlayerInfo(gameState),
-            const SizedBox(height: 8),
+            _buildPlayerStrip(gameState),
+            const SizedBox(height: 4),
+            // Event log
+            if (gameState.eventLog.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: EventLogWidget(events: gameState.eventLog),
+              ),
+            const SizedBox(height: 4),
+            // Board
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 6),
                 child: LudoBoardWidget(gameState: gameState),
               ),
             ),
@@ -81,24 +132,43 @@ class _GameScreenState extends ConsumerState<GameScreen> {
 
   Widget _buildTopBar(BuildContext context, GameState gameState) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
+          // Exit button
           IconButton(
-            icon: const Icon(Icons.close, color: Colors.white70),
+            icon: const Icon(Icons.close_rounded, color: Colors.white54, size: 22),
             onPressed: () => _showExitDialog(context),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
           ),
-          Text(
-            gameState.gameMode.toUpperCase(),
-            style: GoogleFonts.fredoka(
-              fontSize: 16,
-              color: AppColors.accent,
-              letterSpacing: 2,
+          const SizedBox(width: 8),
+          // Tournament badge
+          if (_isTournamentGame)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppColors.accent.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: AppColors.accent.withOpacity(0.4)),
+              ),
+              child: Text(
+                _isFinals
+                    ? '🏆 Finals'
+                    : 'Group ${String.fromCharCode(65 + (_tournamentGroupIndex ?? 0))}',
+                style: GoogleFonts.fredoka(
+                    fontSize: 13, color: AppColors.accent),
+              ),
+            )
+          else
+            Text(
+              gameState.gameMode == GameMode.quick ? '⚡ QUICK' : '🎮 CLASSIC',
+              style: GoogleFonts.fredoka(
+                  fontSize: 14, color: AppColors.accent, letterSpacing: 1),
             ),
-          ),
-          // Timer display
-          _TimerWidget(
+          const Spacer(),
+          // Turn timer
+          _TimerRing(
             seconds: gameState.remainingTurnSeconds,
             total: gameState.turnTimeSeconds,
           ),
@@ -107,66 +177,89 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     );
   }
 
-  Widget _buildPlayerInfo(GameState gameState) {
+  Widget _buildPlayerStrip(GameState gameState) {
     return SizedBox(
-      height: 64,
+      height: 60,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 10),
         itemCount: gameState.players.length,
         itemBuilder: (context, i) {
           final player = gameState.players[i];
           final isCurrent = i == gameState.currentPlayerIndex;
           return AnimatedContainer(
-            duration: 300.ms,
-            margin: const EdgeInsets.only(right: 10),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            duration: 250.ms,
+            margin: const EdgeInsets.only(right: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(12),
               color: isCurrent
-                  ? player.color.withOpacity(0.25)
+                  ? player.color.withOpacity(0.2)
                   : AppColors.darkCard,
               border: Border.all(
                 color: isCurrent ? player.color : AppColors.darkBorder,
                 width: isCurrent ? 2 : 1,
               ),
+              boxShadow: isCurrent
+                  ? [
+                      BoxShadow(
+                          color: player.color.withOpacity(0.3),
+                          blurRadius: 8)
+                    ]
+                  : [],
             ),
             child: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(player.avatarEmoji,
-                    style: const TextStyle(fontSize: 20)),
+                    style: const TextStyle(fontSize: 18)),
                 const SizedBox(width: 6),
                 Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(player.name,
-                        style: GoogleFonts.fredoka(
-                            fontSize: 13,
-                            color: Colors.white,
-                            fontWeight: isCurrent
-                                ? FontWeight.bold
-                                : FontWeight.normal)),
+                    Text(
+                      player.name,
+                      style: GoogleFonts.fredoka(
+                        fontSize: 12,
+                        color: Colors.white,
+                        fontWeight: isCurrent
+                            ? FontWeight.bold
+                            : FontWeight.normal,
+                      ),
+                    ),
                     Row(
-                      children: List.generate(
-                        4,
-                        (t) => Container(
-                          width: 8,
-                          height: 8,
+                      children: List.generate(4, (t) {
+                        final tok = player.tokens[t];
+                        return Container(
+                          width: 7,
+                          height: 7,
                           margin: const EdgeInsets.only(right: 2),
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: player.tokens[t].isFinished
+                            color: tok.isFinished
                                 ? player.color
-                                : player.tokens[t].isAtHome
-                                    ? Colors.white24
-                                    : player.color.withOpacity(0.6),
+                                : tok.isAtHome
+                                    ? Colors.white12
+                                    : player.color.withOpacity(0.55),
+                            border: Border.all(
+                                color: player.color.withOpacity(0.4),
+                                width: 0.5),
                           ),
-                        ),
-                      ),
+                        );
+                      }),
                     ),
                   ],
                 ),
+                if (player.hasWon) ...[
+                  const SizedBox(width: 6),
+                  Text('🏅',
+                      style: TextStyle(
+                          fontSize: 14,
+                          color: player.rank == 1
+                              ? AppColors.accent
+                              : Colors.white54)),
+                ],
               ],
             ),
           );
@@ -177,33 +270,57 @@ class _GameScreenState extends ConsumerState<GameScreen> {
 
   Widget _buildBottomBar(BuildContext context, GameState gameState) {
     final currentPlayer = gameState.currentPlayer;
-    final isHumanTurn = !currentPlayer.isAI;
+    final isHumanTurn = !currentPlayer.isAI && !gameState.isFinished;
+    final canRoll = isHumanTurn &&
+        !gameState.hasRolled &&
+        gameState.phase == GamePhase.rolling;
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+      decoration: BoxDecoration(
+        color: AppColors.darkBg,
+        border: Border(
+            top: BorderSide(color: AppColors.darkBorder.withOpacity(0.5))),
+      ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Column(
-            children: [
-              Text(
-                isHumanTurn
-                    ? '${currentPlayer.name}\'s Turn'
-                    : '${currentPlayer.name} is thinking...',
-                style: GoogleFonts.fredoka(
-                  fontSize: 15,
-                  color: currentPlayer.color,
+          // Current player info
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  currentPlayer.isAI
+                      ? '🤖 ${currentPlayer.name} thinking...'
+                      : gameState.phase == GamePhase.moving
+                          ? '👆 Tap a token to move'
+                          : '🎲 ${currentPlayer.name}\'s turn',
+                  style: GoogleFonts.fredoka(
+                    fontSize: 14,
+                    color: currentPlayer.color,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              DiceWidget(
-                value: gameState.diceValue,
-                canRoll: isHumanTurn && !gameState.hasRolled &&
-                    gameState.phase == GamePhase.rolling,
-                onRoll: () => ref.read(gameProvider.notifier).rollDice(),
-                playerColor: currentPlayer.color,
-              ),
-            ],
+                if (gameState.diceValue > 0 && gameState.phase == GamePhase.moving)
+                  Text(
+                    'Rolled a ${gameState.diceValue}${gameState.movableTokenIds.length > 1 ? " — choose token" : ""}',
+                    style: GoogleFonts.nunito(
+                        fontSize: 11, color: AppColors.textMuted),
+                  ),
+              ],
+            ),
+          ),
+
+          // Dice
+          DiceWidget(
+            value: gameState.diceValue,
+            canRoll: canRoll,
+            onRoll: () {
+              HapticFeedback.mediumImpact();
+              ref.read(gameProvider.notifier).rollDice();
+            },
+            playerColor: currentPlayer.color,
           ),
         ],
       ),
@@ -215,24 +332,37 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.darkSurface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text('Exit Game?',
             style: GoogleFonts.fredoka(color: Colors.white, fontSize: 22)),
-        content: Text('Your progress will be lost.',
-            style: GoogleFonts.nunito(color: Colors.white70)),
+        content: Text(
+          _isTournamentGame
+              ? 'This group will be marked as incomplete.'
+              : 'Your progress will be lost.',
+          style: GoogleFonts.nunito(color: Colors.white70),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text('Stay', style: GoogleFonts.nunito(color: AppColors.primary)),
+            child: Text('Stay',
+                style: GoogleFonts.nunito(color: AppColors.primary)),
           ),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(ctx);
               ref.read(gameProvider.notifier).resetGame();
-              context.go('/home');
+              if (_isTournamentGame) {
+                // Return to bracket
+                context.go('/tournament/bracket',);
+              } else {
+                context.go('/home');
+              }
             },
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
-            child: Text('Exit', style: GoogleFonts.nunito(color: Colors.white)),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.error),
+            child: Text('Exit',
+                style: GoogleFonts.nunito(color: Colors.white)),
           ),
         ],
       ),
@@ -240,40 +370,39 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   }
 }
 
-class _TimerWidget extends StatelessWidget {
+// ── Timer ring widget ──────────────────────────────────────────────────────
+
+class _TimerRing extends StatelessWidget {
   final int seconds;
   final int total;
-  const _TimerWidget({required this.seconds, required this.total});
+  const _TimerRing({required this.seconds, required this.total});
 
   @override
   Widget build(BuildContext context) {
-    final fraction = seconds / total;
-    final color = fraction > 0.5
+    final frac = (total > 0 ? seconds / total : 1.0).clamp(0.0, 1.0);
+    final color = frac > 0.5
         ? AppColors.greenPlayer
-        : fraction > 0.25
+        : frac > 0.25
             ? AppColors.yellowPlayer
             : AppColors.redPlayer;
 
-    return Container(
-      width: 48,
-      height: 48,
+    return SizedBox(
+      width: 44,
+      height: 44,
       child: Stack(
         alignment: Alignment.center,
         children: [
           CircularProgressIndicator(
-            value: fraction,
+            value: frac,
+            strokeWidth: 3,
             backgroundColor: AppColors.darkCard,
             valueColor: AlwaysStoppedAnimation(color),
-            strokeWidth: 3,
           ),
-          Text(
-            '$seconds',
-            style: GoogleFonts.fredoka(
-              fontSize: 14,
-              color: color,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+          Text('$seconds',
+              style: GoogleFonts.fredoka(
+                  fontSize: 13,
+                  color: color,
+                  fontWeight: FontWeight.bold)),
         ],
       ),
     );

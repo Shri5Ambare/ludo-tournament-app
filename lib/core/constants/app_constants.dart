@@ -48,11 +48,14 @@ class AppConstants {
   static const List<int> homeColumnEntries = [50, 11, 24, 37];
 
   // Asset paths
-  static const String diceSound = 'dice_roll.mp3';
+  static const String diceSound      = 'dice_roll.mp3';
   static const String tokenMoveSound = 'token_move.mp3';
-  static const String tokenCutSound = 'token_cut.mp3';
-  static const String winSound = 'win.mp3';
-  static const String bgMusicPath = 'bg_music.mp3';
+  static const String tokenCutSound  = 'token_cut.mp3';
+  static const String tokenHomeSound = 'token_home.mp3';
+  static const String winSound       = 'game_win.mp3';
+  static const String loseSound      = 'game_lose.mp3';
+  static const String buttonTapSound = 'button_tap.mp3';
+  static const String bgMusicPath    = 'bg_music.mp3';
 
   // Hive Box Names
   static const String profilesBox = 'profiles';
@@ -67,15 +70,8 @@ class AppConstants {
   static const String boardThemeKey = 'boardTheme';
 }
 
-class BoardThemes {
-  static const String classic = 'classic';
-  static const String neon = 'neon';
-  static const String space = 'space';
-  static const String forest = 'forest';
-  static const String diwali = 'diwali';
-
-  static const List<String> all = [classic, neon, space, forest, diwali];
-}
+// BoardThemes string constants + full theme data are in:
+// lib/core/theme/board_themes.dart
 
 class GameMode {
   static const String classic = 'classic';

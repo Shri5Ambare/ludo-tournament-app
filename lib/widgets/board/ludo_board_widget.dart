@@ -4,8 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/board_paths.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/theme/board_themes.dart';
 import '../../models/game_models.dart';
 import '../../providers/game_provider.dart';
+import '../../providers/settings_provider.dart';
 
 class LudoBoardWidget extends ConsumerWidget {
   final GameState gameState;
@@ -13,6 +15,9 @@ class LudoBoardWidget extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final settings = ref.watch(settingsProvider);
+    final themeData = BoardThemes.get(settings.boardTheme);
+
     return AspectRatio(
       aspectRatio: 1,
       child: LayoutBuilder(
@@ -23,7 +28,7 @@ class LudoBoardWidget extends ConsumerWidget {
               // Board background
               CustomPaint(
                 size: Size(constraints.maxWidth, constraints.maxHeight),
-                painter: LudoBoardPainter(),
+                painter: LudoBoardPainter(theme: themeData),
               ),
               // Tokens
               ..._buildTokens(constraints, cellSize, ref),
@@ -76,6 +81,9 @@ class LudoBoardWidget extends ConsumerWidget {
                 size: tokenSize,
                 isMovable: isMovable,
                 isFinished: token.isFinished,
+                themeColors: BoardThemes.get(
+                  ref.watch(settingsProvider).boardTheme,
+                ).playerColors,
               ),
             ),
           ),
@@ -98,15 +106,16 @@ class LudoBoardWidget extends ConsumerWidget {
 }
 
 // ─────────────────────────────────────────────
-// Token Widget
+// Token Widget  (animated)
 // ─────────────────────────────────────────────
 
-class _TokenWidget extends StatelessWidget {
+class _TokenWidget extends StatefulWidget {
   final int playerIndex;
   final int tokenId;
   final double size;
   final bool isMovable;
   final bool isFinished;
+  final List<Color> themeColors;
 
   const _TokenWidget({
     required this.playerIndex,
@@ -114,52 +123,140 @@ class _TokenWidget extends StatelessWidget {
     required this.size,
     required this.isMovable,
     required this.isFinished,
+    required this.themeColors,
   });
 
   @override
-  Widget build(BuildContext context) {
-    final color = BoardPaths.playerColors[playerIndex];
+  State<_TokenWidget> createState() => _TokenWidgetState();
+}
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: color,
-        border: Border.all(
-          color: isMovable ? Colors.white : color.withOpacity(0.6),
-          width: isMovable ? 2.5 : 1.5,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: isMovable ? Colors.white.withOpacity(0.5) : color.withOpacity(0.3),
-            blurRadius: isMovable ? 8 : 4,
-            spreadRadius: isMovable ? 2 : 0,
-          ),
-        ],
-      ),
-      child: Center(
-        child: isFinished
-            ? const Icon(Icons.star, color: Colors.white, size: 14)
-            : Text(
-                '${tokenId + 1}',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: size * 0.4,
-                  fontWeight: FontWeight.bold,
+class _TokenWidgetState extends State<_TokenWidget>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  late Animation<double> _scale;
+  late Animation<double> _rotate;
+  late Animation<double> _glow;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 1200));
+    _scale = TweenSequence([
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.25), weight: 25),
+      TweenSequenceItem(tween: Tween(begin: 1.25, end: 0.9), weight: 25),
+      TweenSequenceItem(tween: Tween(begin: 0.9, end: 1.05), weight: 25),
+      TweenSequenceItem(tween: Tween(begin: 1.05, end: 1.0), weight: 25),
+    ]).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOut));
+
+    _rotate = Tween(begin: 0.0, end: 2 * 3.14159).animate(
+        CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
+
+    _glow = TweenSequence([
+      TweenSequenceItem(tween: Tween(begin: 4.0, end: 14.0), weight: 50),
+      TweenSequenceItem(tween: Tween(begin: 14.0, end: 4.0), weight: 50),
+    ]).animate(_ctrl);
+  }
+
+  @override
+  void didUpdateWidget(_TokenWidget old) {
+    super.didUpdateWidget(old);
+    // Bounce when token becomes movable
+    if (!old.isMovable && widget.isMovable) {
+      _ctrl.forward(from: 0).then((_) => _ctrl.reverse());
+    }
+    // Spin when just finished (reached home)
+    if (!old.isFinished && widget.isFinished) {
+      _ctrl.repeat(reverse: false);
+      Future.delayed(const Duration(milliseconds: 900), () {
+        if (mounted) _ctrl.stop();
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final color = widget.themeColors.isNotEmpty &&
+            widget.playerIndex < widget.themeColors.length
+        ? widget.themeColors[widget.playerIndex]
+        : BoardPaths.playerColors[widget.playerIndex];
+
+    return AnimatedBuilder(
+      animation: _ctrl,
+      builder: (context, _) {
+        return Transform.scale(
+          scale: widget.isMovable ? _scale.value : 1.0,
+          child: Transform.rotate(
+            angle: widget.isFinished ? _rotate.value : 0.0,
+            child: Container(
+              width: widget.size,
+              height: widget.size,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: widget.isFinished
+                    ? color.withOpacity(0.9)
+                    : color,
+                border: Border.all(
+                  color: widget.isMovable
+                      ? Colors.white
+                      : color.withOpacity(0.6),
+                  width: widget.isMovable ? 2.5 : 1.5,
                 ),
+                boxShadow: [
+                  BoxShadow(
+                    color: widget.isMovable
+                        ? Colors.white.withOpacity(0.6)
+                        : widget.isFinished
+                            ? color.withOpacity(0.7)
+                            : color.withOpacity(0.3),
+                    blurRadius: widget.isMovable
+                        ? _glow.value
+                        : widget.isFinished
+                            ? 10
+                            : 4,
+                    spreadRadius: widget.isMovable ? 2 : 0,
+                  ),
+                ],
               ),
-      ),
+              child: Center(
+                child: widget.isFinished
+                    ? Icon(Icons.star_rounded,
+                        color: Colors.white, size: widget.size * 0.5)
+                    : Text(
+                        '${widget.tokenId + 1}',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: widget.size * 0.4,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
+
 
 // ─────────────────────────────────────────────
 // Board Painter - draws the complete Ludo board
 // ─────────────────────────────────────────────
 
 class LudoBoardPainter extends CustomPainter {
+  final BoardThemeData theme;
+  const LudoBoardPainter({required this.theme});
+
+  List<Color> get _playerColors => theme.playerColors.isNotEmpty
+      ? theme.playerColors
+      : BoardPaths.playerColors;
+
   @override
   void paint(Canvas canvas, Size size) {
     final cellW = size.width / 15;
@@ -174,34 +271,26 @@ class LudoBoardPainter extends CustomPainter {
   }
 
   void _drawBackground(Canvas canvas, Size size) {
-    final paint = Paint()..color = const Color(0xFF1E1245);
+    final paint = Paint()..color = theme.background;
     canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), paint);
   }
 
   void _drawHomeYards(Canvas canvas, double cw, double ch) {
-    final colors = [
-      BoardPaths.playerColors[0], // Red - top-left
-      BoardPaths.playerColors[1], // Green - top-right
-      BoardPaths.playerColors[2], // Yellow - bottom-right
-      BoardPaths.playerColors[3], // Blue - bottom-left
-    ];
+    final colors = _playerColors;
 
     final rects = [
-      Rect.fromLTWH(0, 0, cw * 6, ch * 6),         // Red
-      Rect.fromLTWH(cw * 9, 0, cw * 6, ch * 6),     // Green
-      Rect.fromLTWH(cw * 9, ch * 9, cw * 6, ch * 6), // Yellow
-      Rect.fromLTWH(0, ch * 9, cw * 6, ch * 6),     // Blue
+      Rect.fromLTWH(0, 0, cw * 6, ch * 6),
+      Rect.fromLTWH(cw * 9, 0, cw * 6, ch * 6),
+      Rect.fromLTWH(cw * 9, ch * 9, cw * 6, ch * 6),
+      Rect.fromLTWH(0, ch * 9, cw * 6, ch * 6),
     ];
 
     for (int i = 0; i < 4; i++) {
-      // Outer yard
       final paint = Paint()..color = colors[i].withOpacity(0.15);
       canvas.drawRRect(
         RRect.fromRectAndRadius(rects[i].deflate(2), const Radius.circular(8)),
         paint,
       );
-
-      // Inner yard border
       final borderPaint = Paint()
         ..color = colors[i].withOpacity(0.4)
         ..style = PaintingStyle.stroke
@@ -210,24 +299,28 @@ class LudoBoardPainter extends CustomPainter {
         RRect.fromRectAndRadius(rects[i].deflate(2), const Radius.circular(8)),
         borderPaint,
       );
-
-      // Inner white box
-      final innerPaint = Paint()..color = Colors.white.withOpacity(0.08);
+      final innerPaint = Paint()..color = theme.yardOverlay;
       final innerRect = rects[i].deflate(cw * 0.8);
       canvas.drawRRect(
         RRect.fromRectAndRadius(innerRect, const Radius.circular(6)),
         innerPaint,
       );
 
-      // Token circles (4 circles in each yard)
+      // Token circles
       final yards = BoardPaths.homeYards[i]!;
       for (final pos in yards) {
         final cx = pos[1] * cw + cw / 2;
         final cy = pos[0] * ch + ch / 2;
         final r = cw * 0.35;
-        // Circle bg
         final circlePaint = Paint()..color = colors[i].withOpacity(0.3);
         canvas.drawCircle(Offset(cx, cy), r, circlePaint);
+        // Neon glow ring
+        if (theme.glowEffect) {
+          final glowPaint = Paint()
+            ..color = colors[i].withOpacity(0.15)
+            ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
+          canvas.drawCircle(Offset(cx, cy), r + 4, glowPaint);
+        }
         final circleStroke = Paint()
           ..color = colors[i].withOpacity(0.7)
           ..style = PaintingStyle.stroke
@@ -238,43 +331,49 @@ class LudoBoardPainter extends CustomPainter {
   }
 
   void _drawMainPath(Canvas canvas, double cw, double ch) {
-    final cellPaint = Paint()..color = const Color(0xFF2A1F55);
-    final safePaint = Paint()..color = const Color(0xFF1A3A2A);
+    final cellPaint = Paint()..color = theme.cellColor;
+    final safePaint = Paint()..color = theme.safeCellColor;
     final borderPaint = Paint()
-      ..color = Colors.white.withOpacity(0.08)
+      ..color = theme.gridLine
       ..style = PaintingStyle.stroke
       ..strokeWidth = 0.5;
 
     for (int i = 0; i < BoardPaths.mainPath.length; i++) {
       final cell = BoardPaths.mainPath[i];
       final rect = Rect.fromLTWH(
-        cell[1] * cw + 0.5, cell[0] * ch + 0.5,
-        cw - 1, ch - 1,
+        cell[1] * cw + 0.5, cell[0] * ch + 0.5, cw - 1, ch - 1,
       );
       final isSafe = BoardPaths.safePositions.contains(i);
       canvas.drawRect(rect, isSafe ? safePaint : cellPaint);
       canvas.drawRect(rect, borderPaint);
 
-      // Draw star on safe positions
       if (isSafe && i != 0) {
-        _drawStar(canvas, rect.center, cw * 0.25, Colors.white.withOpacity(0.3));
+        // Glow on safe cells for neon/diwali
+        if (theme.glowEffect) {
+          final glowPaint = Paint()
+            ..color = theme.safeCellColor.withOpacity(0.4)
+            ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
+          canvas.drawRect(rect, glowPaint);
+        }
+        _drawStar(canvas, rect.center, cw * 0.25,
+            Colors.white.withOpacity(theme.glowEffect ? 0.55 : 0.3));
       }
     }
 
-    // Draw player start positions (colored cells)
+    // Player start positions
     for (int p = 0; p < 4; p++) {
       final startIdx = BoardPaths.playerStartIndex[p];
       final cell = BoardPaths.mainPath[startIdx];
       final rect = Rect.fromLTWH(
         cell[1] * cw + 0.5, cell[0] * ch + 0.5, cw - 1, ch - 1,
       );
-      final paint = Paint()..color = BoardPaths.playerColors[p].withOpacity(0.5);
+      final paint = Paint()..color = _playerColors[p].withOpacity(0.5);
       canvas.drawRect(rect, paint);
     }
   }
 
   void _drawHomeColumns(Canvas canvas, double cw, double ch) {
-    final colors = BoardPaths.playerColors;
+    final colors = _playerColors;
     for (int p = 0; p < 4; p++) {
       final cells = BoardPaths.homeColumns[p]!;
       for (int i = 0; i < cells.length; i++) {
@@ -299,17 +398,19 @@ class LudoBoardPainter extends CustomPainter {
     final cy = size.height / 2;
     final halfW = cw * 3;
     final halfH = ch * 3;
+    final colors = _playerColors;
 
-    // Draw 4 colored triangles pointing to center
-    final colors = BoardPaths.playerColors;
+    // Center background
+    final bgPaint = Paint()..color = theme.centerBg;
+    canvas.drawRect(
+      Rect.fromCenter(center: Offset(cx, cy), width: halfW * 2, height: halfH * 2),
+      bgPaint,
+    );
+
     final triangles = [
-      // Top triangle (Green)
       [Offset(cx - halfW, cy - halfH), Offset(cx + halfW, cy - halfH), Offset(cx, cy)],
-      // Right triangle (Yellow)
       [Offset(cx + halfW, cy - halfH), Offset(cx + halfW, cy + halfH), Offset(cx, cy)],
-      // Bottom triangle (Blue)
       [Offset(cx + halfW, cy + halfH), Offset(cx - halfW, cy + halfH), Offset(cx, cy)],
-      // Left triangle (Red)
       [Offset(cx - halfW, cy + halfH), Offset(cx - halfW, cy - halfH), Offset(cx, cy)],
     ];
 
@@ -321,15 +422,21 @@ class LudoBoardPainter extends CustomPainter {
         ..close();
       final paint = Paint()..color = colors[i].withOpacity(0.35);
       canvas.drawPath(path, paint);
+      if (theme.glowEffect) {
+        final glowPaint = Paint()
+          ..color = colors[i].withOpacity(0.1)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
+        canvas.drawPath(path, glowPaint);
+      }
     }
 
-    // Center star
-    _drawStar(canvas, Offset(cx, cy), cw * 0.8, Colors.white.withOpacity(0.5));
+    _drawStar(canvas, Offset(cx, cy), cw * 0.8,
+        Colors.white.withOpacity(theme.glowEffect ? 0.7 : 0.5));
   }
 
   void _drawGrid(Canvas canvas, Size size, double cw, double ch) {
     final paint = Paint()
-      ..color = Colors.white.withOpacity(0.04)
+      ..color = theme.gridLine
       ..strokeWidth = 0.5;
     for (double x = 0; x <= size.width; x += cw) {
       canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
@@ -344,8 +451,8 @@ class LudoBoardPainter extends CustomPainter {
     final path = Path();
     for (int i = 0; i < 5; i++) {
       final angle = (i * 4 * pi) / 5 - pi / 2;
-      final x = center.dx + radius * cos(angle);
-      final y = center.dy + radius * sin(angle);
+      final x = center.dx + radius * _cos(angle);
+      final y = center.dy + radius * _sin(angle);
       if (i == 0) path.moveTo(x, y);
       else path.lineTo(x, y);
     }
@@ -353,18 +460,14 @@ class LudoBoardPainter extends CustomPainter {
     canvas.drawPath(path, paint);
   }
 
-  double cos(double r) => math_cos(r);
-  double sin(double r) => math_sin(r);
-
-  static double math_cos(double r) => _mathCos(r);
-  static double math_sin(double r) => _mathSin(r);
-  static double _mathCos(double r) {
+  double _cos(double r) {
     r = r % (2 * pi);
     double result = 1, term = 1;
     for (int i = 1; i <= 10; i++) { term *= -r * r / ((2*i-1) * (2*i)); result += term; }
     return result;
   }
-  static double _mathSin(double r) {
+
+  double _sin(double r) {
     r = r % (2 * pi);
     double result = r, term = r;
     for (int i = 1; i <= 10; i++) { term *= -r * r / ((2*i) * (2*i+1)); result += term; }
@@ -372,5 +475,5 @@ class LudoBoardPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant LudoBoardPainter old) => old.theme.id != theme.id;
 }

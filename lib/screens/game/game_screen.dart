@@ -10,6 +10,7 @@ import '../../models/game_models.dart';
 import '../../providers/chat_provider.dart';
 import '../../providers/game_provider.dart';
 import '../../providers/tournament_provider.dart';
+import '../../services/audio_service.dart';
 import '../../widgets/board/ludo_board_widget.dart';
 import '../../widgets/common/event_log_widget.dart';
 import '../../widgets/common/game_chat_widget.dart';
@@ -49,6 +50,9 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       // Clear chat from any previous game
       ref.read(chatProvider.notifier).clear();
 
+      // Start background music
+      ref.read(audioServiceProvider).startBgMusic();
+
       // Fix: playerConfigs key was inconsistent across callers — support both keys
       final configs = (widget.config['playerConfigs'] ??
               widget.config['players']) as List?;
@@ -67,6 +71,12 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                 widget.config['turnTimerSeconds'] as int? ?? 30,
           );
     });
+  }
+
+  @override
+  void dispose() {
+    ref.read(audioServiceProvider).stopBgMusic();
+    super.dispose();
   }
 
   @override

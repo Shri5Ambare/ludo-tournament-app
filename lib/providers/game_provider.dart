@@ -5,6 +5,7 @@ import '../models/game_models.dart';
 import '../game_engine/game_engine.dart';
 import '../ai/ai_engine.dart';
 import '../core/constants/app_constants.dart';
+import '../services/audio_service.dart';
 
 // ─────────────────────────────────────────────
 // Game Provider
@@ -48,6 +49,7 @@ class GameNotifier extends StateNotifier<GameState?> {
 
     _cancelTimers();
     final diceValue = GameEngine.rollDice();
+    _ref.read(audioServiceProvider).playDiceRoll();
     state = GameEngine.applyDiceRoll(currentState, diceValue);
     _afterStateUpdate();
   }
@@ -61,7 +63,9 @@ class GameNotifier extends StateNotifier<GameState?> {
     if (currentState.currentPlayer.isAI) return;
 
     _cancelTimers();
-    state = GameEngine.moveToken(currentState, tokenId);
+    final newState = GameEngine.moveToken(currentState, tokenId);
+    state = newState;
+    _playMoveSound(currentState, newState, tokenId);
     _afterStateUpdate();
   }
 
@@ -139,6 +143,7 @@ class GameNotifier extends StateNotifier<GameState?> {
     if (!currentState.hasRolled) {
       // AI rolls
       final diceValue = GameEngine.rollDice();
+      _ref.read(audioServiceProvider).playDiceRoll();
       state = GameEngine.applyDiceRoll(currentState, diceValue);
       _afterStateUpdate();
     } else if (currentState.movableTokenIds.isNotEmpty) {
@@ -156,7 +161,9 @@ class GameNotifier extends StateNotifier<GameState?> {
             diceValue: s.diceValue,
             difficulty: s.currentPlayer.aiDifficulty,
           );
-          state = GameEngine.moveToken(s, tokenId);
+          final newS = GameEngine.moveToken(s, tokenId);
+          _playMoveSound(s, newS, tokenId);
+          state = newS;
           _afterStateUpdate();
         },
       );
@@ -165,16 +172,54 @@ class GameNotifier extends StateNotifier<GameState?> {
 
   void _afterStateUpdate() {
     final currentState = state;
-    if (currentState == null || currentState.isFinished) {
+    if (currentState == null) return;
+
+    // Win sound
+    if (currentState.isFinished) {
+      _ref.read(audioServiceProvider).playWin();
       _cancelTimers();
       return;
     }
+
     // Reset turn timer
     state = currentState.copyWith(
       remainingTurnSeconds: currentState.turnTimeSeconds,
     );
     _startTurnTimer();
     _triggerAIIfNeeded();
+  }
+
+  /// Play the right sound based on what changed between before/after move
+  void _playMoveSound(GameState before, GameState after, int tokenId) {
+    final audio = _ref.read(audioServiceProvider);
+
+    // Check if a token was cut (opponent token returned home)
+    int beforeActive = before.players
+        .expand((p) => p.tokens)
+        .where((t) => t.isActive)
+        .length;
+    int afterActive = after.players
+        .expand((p) => p.tokens)
+        .where((t) => t.isActive)
+        .length;
+    if (afterActive < beforeActive) {
+      audio.playTokenCut();
+      return;
+    }
+
+    // Check if our token just finished (reached home)
+    final playerIdx = before.currentPlayerIndex;
+    final beforeFinished = before.players[playerIdx].tokens
+        .where((t) => t.isFinished).length;
+    final afterFinished = after.players[playerIdx].tokens
+        .where((t) => t.isFinished).length;
+    if (afterFinished > beforeFinished) {
+      audio.playTokenHome();
+      return;
+    }
+
+    // Regular move
+    audio.playTokenMove();
   }
 
   void _cancelTimers() {

@@ -1,9 +1,12 @@
 // lib/widgets/common/board_theme_selector.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../core/constants/app_constants.dart';
+import '../../core/constants/board_paths.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/theme/board_themes.dart';
 import '../../providers/settings_provider.dart';
 
 class BoardThemeSelector extends ConsumerWidget {
@@ -12,39 +15,7 @@ class BoardThemeSelector extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(settingsProvider);
-
-    final themes = [
-      _ThemeOption(
-        id: BoardThemes.classic,
-        label: 'Classic',
-        emoji: '🎮',
-        colors: [const Color(0xFF1A1035), const Color(0xFF6C3CE1)],
-      ),
-      _ThemeOption(
-        id: BoardThemes.neon,
-        label: 'Neon',
-        emoji: '💜',
-        colors: [const Color(0xFF0D0D0D), const Color(0xFF00FFFF)],
-      ),
-      _ThemeOption(
-        id: BoardThemes.space,
-        label: 'Space',
-        emoji: '🚀',
-        colors: [const Color(0xFF000014), const Color(0xFF4FC3F7)],
-      ),
-      _ThemeOption(
-        id: BoardThemes.forest,
-        label: 'Forest',
-        emoji: '🌿',
-        colors: [const Color(0xFF1B2C1A), const Color(0xFF66BB6A)],
-      ),
-      _ThemeOption(
-        id: BoardThemes.diwali,
-        label: 'Diwali',
-        emoji: '🪔',
-        colors: [const Color(0xFF1A0A00), const Color(0xFFFF9800)],
-      ),
-    ];
+    final themeIds = BoardThemes.all;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -54,62 +25,63 @@ class BoardThemeSelector extends ConsumerWidget {
                 fontSize: 16, color: Colors.white, fontWeight: FontWeight.bold)),
         const SizedBox(height: 12),
         SizedBox(
-          height: 90,
+          height: 96,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
-            itemCount: themes.length,
+            itemCount: themeIds.length,
             itemBuilder: (context, i) {
-              final theme = themes[i];
-              final isSelected = settings.boardTheme == theme.id;
+              final td = BoardThemes.get(themeIds[i]);
+              final isSelected = settings.boardTheme == td.id;
               return GestureDetector(
-                onTap: () => ref
-                    .read(settingsProvider.notifier)
-                    .setBoardTheme(theme.id),
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  ref.read(settingsProvider.notifier).setBoardTheme(td.id);
+                },
                 child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
+                  duration: 220.ms,
                   margin: const EdgeInsets.only(right: 12),
-                  width: 76,
+                  width: 80,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(14),
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: theme.colors,
-                    ),
+                    color: td.background,
                     border: Border.all(
-                      color: isSelected ? AppColors.accent : Colors.transparent,
-                      width: 2.5,
+                      color: isSelected ? AppColors.accent : Colors.white12,
+                      width: isSelected ? 2.5 : 1,
                     ),
                     boxShadow: isSelected
                         ? [
                             BoxShadow(
-                              color: AppColors.accent.withOpacity(0.4),
-                              blurRadius: 12,
+                              color: (td.playerColors.isNotEmpty
+                                      ? td.playerColors.first
+                                      : AppColors.accent)
+                                  .withOpacity(0.4),
+                              blurRadius: 14,
                               spreadRadius: 2,
-                            )
+                            ),
                           ]
                         : [],
                   ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(theme.emoji,
-                          style: const TextStyle(fontSize: 26)),
-                      const SizedBox(height: 4),
-                      Text(theme.label,
+                      _MiniBoardPreview(themeData: td),
+                      const SizedBox(height: 6),
+                      Text(td.emoji,
+                          style: const TextStyle(fontSize: 14)),
+                      Text(td.label,
                           style: GoogleFonts.nunito(
-                              fontSize: 11,
-                              color: Colors.white,
+                              fontSize: 10,
+                              color: isSelected ? Colors.white : Colors.white54,
                               fontWeight: isSelected
                                   ? FontWeight.bold
                                   : FontWeight.normal)),
                       if (isSelected)
-                        const Icon(Icons.check_circle,
-                            color: AppColors.accent, size: 14),
+                        const Icon(Icons.check_circle_rounded,
+                            color: AppColors.accent, size: 12),
                     ],
                   ),
                 ),
-              );
+              ).animate(delay: (i * 50).ms).fadeIn().slideX(begin: 0.1);
             },
           ),
         ),
@@ -118,16 +90,57 @@ class BoardThemeSelector extends ConsumerWidget {
   }
 }
 
-class _ThemeOption {
-  final String id;
-  final String label;
-  final String emoji;
-  final List<Color> colors;
+class _MiniBoardPreview extends StatelessWidget {
+  final BoardThemeData themeData;
+  const _MiniBoardPreview({required this.themeData});
 
-  const _ThemeOption({
-    required this.id,
-    required this.label,
-    required this.emoji,
-    required this.colors,
-  });
+  @override
+  Widget build(BuildContext context) {
+    final colors = themeData.playerColors.isNotEmpty
+        ? themeData.playerColors
+        : BoardPaths.playerColors;
+    return SizedBox(
+      width: 36,
+      height: 36,
+      child: CustomPaint(
+        painter: _MiniPainter(
+          bg: themeData.background,
+          cell: themeData.cellColor,
+          colors: colors,
+          glow: themeData.glowEffect,
+        ),
+      ),
+    );
+  }
+}
+
+class _MiniPainter extends CustomPainter {
+  final Color bg;
+  final Color cell;
+  final List<Color> colors;
+  final bool glow;
+  const _MiniPainter({required this.bg, required this.cell, required this.colors, required this.glow});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width / 3;
+    final h = size.height / 3;
+    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height),
+        Paint()..color = bg);
+    final corners = [[0,0],[0,2],[2,0],[2,2]];
+    final cc = [colors[0], colors[3], colors[1], colors[2]];
+    for (int i = 0; i < 4; i++) {
+      final rect = Rect.fromLTWH(corners[i][1]*w, corners[i][0]*h, w-1, h-1);
+      canvas.drawRRect(RRect.fromRectAndRadius(rect, const Radius.circular(3)),
+          Paint()..color = cc[i].withOpacity(0.75));
+      if (glow) {
+        canvas.drawRRect(RRect.fromRectAndRadius(rect.inflate(1), const Radius.circular(4)),
+            Paint()..color = cc[i].withOpacity(0.2)..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3));
+      }
+    }
+    canvas.drawRect(Rect.fromLTWH(w, h, w-1, h-1), Paint()..color = cell);
+  }
+
+  @override
+  bool shouldRepaint(covariant _MiniPainter old) => old.bg != bg || old.glow != glow;
 }

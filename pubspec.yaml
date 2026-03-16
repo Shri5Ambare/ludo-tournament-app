@@ -50,6 +50,9 @@ dependencies:
   # Connectivity
   connectivity_plus: ^5.0.2
 
+  # Supabase (online multiplayer backend)
+  supabase_flutter: ^2.3.4
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

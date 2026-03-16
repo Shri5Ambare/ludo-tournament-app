@@ -41,7 +41,7 @@ class LanService {
   WebSocket? _clientSocket;
   final List<WebSocket> _connectedClients = [];
 
-  // Stream of incoming messages
+  // Stream of incoming game messages
   final _messageController =
       StreamController<LanGameMessage>.broadcast();
   Stream<LanGameMessage> get messages => _messageController.stream;
@@ -50,6 +50,9 @@ class LanService {
   final _connectionController =
       StreamController<String>.broadcast();
   Stream<String> get connectionStatus => _connectionController.stream;
+
+  // Chat callback — set this to route incoming chat messages to ChatNotifier
+  void Function(Map<String, dynamic> chatPayload)? onChatMessage;
 
   LanRole get role => _role;
   bool get isHost => _role == LanRole.host;
@@ -143,9 +146,15 @@ class LanService {
     try {
       final map = jsonDecode(data as String) as Map<String, dynamic>;
       final msg = LanGameMessage.fromJson(map);
-      _messageController.add(msg);
 
-      // If host, relay to all other clients
+      // Route chat messages to chat callback instead of game stream
+      if (msg.type == 'chat') {
+        onChatMessage?.call(msg.data);
+      } else {
+        _messageController.add(msg);
+      }
+
+      // If host, relay to all other clients (including chat)
       if (isHost && source != null) {
         for (final client in List.from(_connectedClients)) {
           if (client != source) {
@@ -154,6 +163,34 @@ class LanService {
         }
       }
     } catch (_) {}
+  }
+
+  /// Send a chat message over LAN
+  void sendChat({
+    required String playerName,
+    required int playerIndex,
+    required String content,
+    required String type, // 'text' or 'emoji'
+    required String messageId,
+    required String timestamp,
+  }) {
+    final msg = LanGameMessage(
+      type: 'chat',
+      data: {
+        'id': messageId,
+        'playerName': playerName,
+        'playerIndex': playerIndex,
+        'content': content,
+        'type': type,
+        'timestamp': timestamp,
+      },
+      playerId: '$playerIndex',
+    );
+    if (isHost) {
+      broadcast(msg);
+    } else {
+      sendToHost(msg);
+    }
   }
 
   Future<String> _getLocalIP() async {

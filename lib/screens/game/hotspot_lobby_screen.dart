@@ -9,6 +9,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/game_models.dart';
+import '../../providers/chat_provider.dart';
 import '../../services/lan_service.dart';
 
 class HotspotLobbyScreen extends ConsumerStatefulWidget {
@@ -35,6 +36,9 @@ class _HotspotLobbyScreenState extends ConsumerState<HotspotLobbyScreen> {
     super.initState();
     _statusSub = _lanService.connectionStatus.listen(_onConnectionStatus);
     _messageSub = _lanService.messages.listen(_onMessage);
+    // Wire incoming chat messages to ChatNotifier
+    _lanService.onChatMessage = (json) =>
+        ref.read(chatProvider.notifier).receiveFromJson(json);
     if (widget.isHost) _startHost();
   }
 
@@ -96,10 +100,28 @@ class _HotspotLobbyScreenState extends ConsumerState<HotspotLobbyScreen> {
     if (msg.type == 'start_game') {
       final configs = (msg.data['playerConfigs'] as List)
           .cast<Map<String, dynamic>>();
+      // Client is always the last joined player
+      final clientIndex = configs.length - 1;
+      final clientName = configs[clientIndex]['name'] as String? ?? 'Player';
+
+      // Wire outgoing chat to LAN
+      ref.read(chatProvider.notifier).onSend = (chatMsg) {
+        _lanService.sendChat(
+          playerName: chatMsg.playerName,
+          playerIndex: chatMsg.playerIndex,
+          content: chatMsg.content,
+          type: chatMsg.type.name,
+          messageId: chatMsg.id,
+          timestamp: chatMsg.timestamp.toIso8601String(),
+        );
+      };
+
       context.pushReplacement('/game', extra: {
         'playerConfigs': configs,
         'gameMode': msg.data['gameMode'],
         'turnTimerSeconds': msg.data['turnTimerSeconds'],
+        'localPlayerName': clientName,
+        'localPlayerIndex': clientIndex,
       });
     }
   }
@@ -122,10 +144,24 @@ class _HotspotLobbyScreenState extends ConsumerState<HotspotLobbyScreen> {
     );
     _lanService.broadcast(msg);
 
+    // Host is always player index 0 — wire outgoing chat to LAN
+    ref.read(chatProvider.notifier).onSend = (chatMsg) {
+      _lanService.sendChat(
+        playerName: chatMsg.playerName,
+        playerIndex: chatMsg.playerIndex,
+        content: chatMsg.content,
+        type: chatMsg.type.name,
+        messageId: chatMsg.id,
+        timestamp: chatMsg.timestamp.toIso8601String(),
+      );
+    };
+
     context.pushReplacement('/game', extra: {
       'playerConfigs': configs,
       'gameMode': GameMode.classic,
       'turnTimerSeconds': 30,
+      'localPlayerName': configs[0]['name'] as String? ?? 'Host',
+      'localPlayerIndex': 0,
     });
   }
 

@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/game_models.dart';
+import '../../providers/chat_provider.dart';
 import '../../services/supabase_service.dart';
 
 class OnlineLobbyScreen extends ConsumerStatefulWidget {
@@ -81,15 +82,41 @@ class _OnlineLobbyScreenState extends ConsumerState<OnlineLobbyScreen> {
 
   void _startGame() {
     if (_room == null) return;
+    final svc = ref.read(supabaseServiceProvider);
     final configs = _room!.players.map((p) => {
       'name': p.name,
       'type': PlayerType.human,
       'avatar': '🎮',
     }).toList();
+
+    // Determine local player index from the current user
+    final localIndex = _room!.players
+        .indexWhere((p) => p.id == svc.currentUserId);
+    final safeLocalIndex = localIndex < 0 ? 0 : localIndex;
+    final localName = configs[safeLocalIndex]['name'] as String? ?? 'Player';
+
+    // Wire incoming chat from Supabase Realtime → ChatNotifier
+    svc.onChatEvent = (json) =>
+        ref.read(chatProvider.notifier).receiveFromJson(json);
+
+    // Wire outgoing chat from ChatNotifier → Supabase broadcast
+    ref.read(chatProvider.notifier).onSend = (chatMsg) {
+      svc.broadcastChat(
+        playerName: chatMsg.playerName,
+        playerIndex: chatMsg.playerIndex,
+        content: chatMsg.content,
+        type: chatMsg.type.name,
+        messageId: chatMsg.id,
+        timestamp: chatMsg.timestamp.toIso8601String(),
+      );
+    };
+
     context.pushReplacement('/game', extra: {
       'playerConfigs': configs,
       'gameMode': _room!.gameMode,
       'turnTimerSeconds': _room!.turnTimer,
+      'localPlayerName': localName,
+      'localPlayerIndex': safeLocalIndex,
     });
   }
 

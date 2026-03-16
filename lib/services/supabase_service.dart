@@ -175,7 +175,40 @@ class SupabaseService {
   /// Broadcast a game event (dice roll, token move, etc.)
   Future<void> broadcastEvent(GameEvent event) async {
     // Real: await supabase.from('game_events').insert(event.toJson())
-    _eventController.add(event); // local echo for stub
+    // Route chat events to callback, others to stream
+    if (event.type == 'chat') {
+      onChatEvent?.call(event.payload);
+    } else {
+      _eventController.add(event); // local echo for stub
+    }
+  }
+
+  // ── Chat ──────────────────────────────────────────────────────────────────
+
+  /// Called when a remote player sends a chat message over Realtime
+  void Function(Map<String, dynamic> chatPayload)? onChatEvent;
+
+  /// Broadcast a chat message to all players in the room
+  Future<void> broadcastChat({
+    required String playerName,
+    required int playerIndex,
+    required String content,
+    required String type,
+    required String messageId,
+    required String timestamp,
+  }) async {
+    await broadcastEvent(GameEvent(
+      type: 'chat',
+      playerId: '$playerIndex',
+      payload: {
+        'id': messageId,
+        'playerName': playerName,
+        'playerIndex': playerIndex,
+        'content': content,
+        'type': type,
+        'timestamp': timestamp,
+      },
+    ));
   }
 
   // ── Leaderboard ───────────────────────────────────────────────────────────

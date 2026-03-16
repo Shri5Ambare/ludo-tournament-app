@@ -7,10 +7,12 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/game_models.dart';
+import '../../providers/chat_provider.dart';
 import '../../providers/game_provider.dart';
 import '../../providers/tournament_provider.dart';
 import '../../widgets/board/ludo_board_widget.dart';
 import '../../widgets/common/event_log_widget.dart';
+import '../../widgets/common/game_chat_widget.dart';
 import '../../widgets/dice/dice_widget.dart';
 
 class GameScreen extends ConsumerStatefulWidget {
@@ -24,6 +26,15 @@ class GameScreen extends ConsumerStatefulWidget {
 class _GameScreenState extends ConsumerState<GameScreen> {
   bool _navigated = false;
 
+  // Chat — local player info derived from config
+  String get _localPlayerName =>
+      (widget.config['localPlayerName'] as String?) ??
+      (widget.config['playerConfigs'] != null
+          ? (widget.config['playerConfigs'] as List).first['name'] as String? ?? 'Player 1'
+          : 'Player 1');
+  int get _localPlayerIndex =>
+      (widget.config['localPlayerIndex'] as int?) ?? 0;
+
   // Tournament context from config
   int? get _tournamentGroupIndex =>
       widget.config['tournamentGroupIndex'] as int?;
@@ -35,6 +46,9 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Clear chat from any previous game
+      ref.read(chatProvider.notifier).clear();
+
       // Fix: playerConfigs key was inconsistent across callers — support both keys
       final configs = (widget.config['playerConfigs'] ??
               widget.config['players']) as List?;
@@ -104,26 +118,43 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     return Scaffold(
       backgroundColor: AppColors.darkBg,
       body: SafeArea(
-        child: Column(
+        child: Stack(
           children: [
-            _buildTopBar(context, gameState),
-            _buildPlayerStrip(gameState),
-            const SizedBox(height: 4),
-            // Event log
-            if (gameState.eventLog.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: EventLogWidget(events: gameState.eventLog),
-              ),
-            const SizedBox(height: 4),
-            // Board
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 6),
-                child: LudoBoardWidget(gameState: gameState),
-              ),
+            // ── Main game column ─────────────────────────────────────
+            Column(
+              children: [
+                _buildTopBar(context, gameState),
+                _buildPlayerStrip(gameState),
+                const SizedBox(height: 4),
+                // Event log
+                if (gameState.eventLog.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: EventLogWidget(events: gameState.eventLog),
+                  ),
+                const SizedBox(height: 4),
+                // Board
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 6),
+                    child: LudoBoardWidget(gameState: gameState),
+                  ),
+                ),
+                _buildBottomBar(context, gameState),
+              ],
             ),
-            _buildBottomBar(context, gameState),
+            // ── Chat panel (slide-up overlay) ────────────────────────
+            Consumer(builder: (context, ref, _) {
+              final isOpen = ref.watch(chatProvider).isOpen;
+              if (!isOpen) return const SizedBox.shrink();
+              return Positioned(
+                bottom: 0, left: 0, right: 0,
+                child: GameChatPanel(
+                  localPlayerName: _localPlayerName,
+                  localPlayerIndex: _localPlayerIndex,
+                ),
+              );
+            }),
           ],
         ),
       ),
@@ -167,6 +198,9 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                   fontSize: 14, color: AppColors.accent, letterSpacing: 1),
             ),
           const Spacer(),
+          // Chat FAB (only in multiplayer modes)
+          const ChatFab(),
+          const SizedBox(width: 8),
           // Turn timer
           _TimerRing(
             seconds: gameState.remainingTurnSeconds,

@@ -48,7 +48,7 @@ class ProfileScreen extends ConsumerWidget {
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.primary.withOpacity(0.4),
+                    color: AppColors.primary.withValues(alpha: 0.4),
                     blurRadius: 20,
                     spreadRadius: 4,
                   )
@@ -129,8 +129,8 @@ class ProfileScreen extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(10),
-                  color: AppColors.primary.withOpacity(0.15),
-                  border: Border.all(color: AppColors.primary.withOpacity(0.4)),
+                  color: AppColors.primary.withValues(alpha: 0.15),
+                  border: Border.all(color: AppColors.primary.withValues(alpha: 0.4)),
                 ),
                 child: Text(a,
                     style: GoogleFonts.nunito(

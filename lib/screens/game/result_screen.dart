@@ -124,11 +124,11 @@ class _ResultScreenState extends State<ResultScreen> {
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(14),
                           color: rank == 1
-                              ? AppColors.accent.withOpacity(0.1)
+                              ? AppColors.accent.withValues(alpha: 0.1)
                               : AppColors.darkCard,
                           border: Border.all(
                             color: rank == 1
-                                ? AppColors.accent.withOpacity(0.5)
+                                ? AppColors.accent.withValues(alpha: 0.5)
                                 : AppColors.darkBorder,
                             width: rank == 1 ? 1.5 : 1,
                           ),
@@ -154,7 +154,7 @@ class _ResultScreenState extends State<ResultScreen> {
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 10, vertical: 4),
                                 decoration: BoxDecoration(
-                                  color: AppColors.accent.withOpacity(0.15),
+                                  color: AppColors.accent.withValues(alpha: 0.15),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: Text('Advances →',
@@ -199,11 +199,11 @@ class _ResultScreenState extends State<ResultScreen> {
           height: 90,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: color.withOpacity(0.15),
+            color: color.withValues(alpha: 0.15),
             border: Border.all(color: AppColors.accent, width: 3),
             boxShadow: [
               BoxShadow(
-                  color: AppColors.accent.withOpacity(0.5),
+                  color: AppColors.accent.withValues(alpha: 0.5),
                   blurRadius: 28,
                   spreadRadius: 4),
             ],

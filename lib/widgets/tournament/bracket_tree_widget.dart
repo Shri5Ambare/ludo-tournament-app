@@ -79,9 +79,9 @@ class BracketTreeWidget extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 6),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.15),
+        color: color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withOpacity(0.4)),
+        border: Border.all(color: color.withValues(alpha: 0.4)),
       ),
       child: Text(
         label,
@@ -105,8 +105,8 @@ class _GroupNode extends StatelessWidget {
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(10),
-        color: color.withOpacity(0.1),
-        border: Border.all(color: color.withOpacity(0.4)),
+        color: color.withValues(alpha: 0.1),
+        border: Border.all(color: color.withValues(alpha: 0.4)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -166,8 +166,8 @@ class _WinnerNode extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(10),
-        color: AppColors.accent.withOpacity(0.1),
-        border: Border.all(color: AppColors.accent.withOpacity(0.5)),
+        color: AppColors.accent.withValues(alpha: 0.1),
+        border: Border.all(color: AppColors.accent.withValues(alpha: 0.5)),
       ),
       child: Row(
         children: [
@@ -228,14 +228,14 @@ class _ChampionNode extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         gradient: LinearGradient(
           colors: [
-            AppColors.accent.withOpacity(0.3),
-            AppColors.primary.withOpacity(0.2),
+            AppColors.accent.withValues(alpha: 0.3),
+            AppColors.primary.withValues(alpha: 0.2),
           ],
         ),
         border: Border.all(color: AppColors.accent, width: 2),
         boxShadow: [
           BoxShadow(
-            color: AppColors.accent.withOpacity(0.3),
+            color: AppColors.accent.withValues(alpha: 0.3),
             blurRadius: 12,
           ),
         ],

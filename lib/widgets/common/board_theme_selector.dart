@@ -54,7 +54,7 @@ class BoardThemeSelector extends ConsumerWidget {
                               color: (td.playerColors.isNotEmpty
                                       ? td.playerColors.first
                                       : AppColors.accent)
-                                  .withOpacity(0.4),
+                                  .withValues(alpha: 0.4),
                               blurRadius: 14,
                               spreadRadius: 2,
                             ),
@@ -132,10 +132,10 @@ class _MiniPainter extends CustomPainter {
     for (int i = 0; i < 4; i++) {
       final rect = Rect.fromLTWH(corners[i][1]*w, corners[i][0]*h, w-1, h-1);
       canvas.drawRRect(RRect.fromRectAndRadius(rect, const Radius.circular(3)),
-          Paint()..color = cc[i].withOpacity(0.75));
+          Paint()..color = cc[i].withValues(alpha: 0.75));
       if (glow) {
         canvas.drawRRect(RRect.fromRectAndRadius(rect.inflate(1), const Radius.circular(4)),
-            Paint()..color = cc[i].withOpacity(0.2)..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3));
+            Paint()..color = cc[i].withValues(alpha: 0.2)..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3));
       }
     }
     canvas.drawRect(Rect.fromLTWH(w, h, w-1, h-1), Paint()..color = cell);

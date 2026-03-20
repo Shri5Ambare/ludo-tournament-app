@@ -50,7 +50,7 @@ class _SplashScreenState extends State<SplashScreen> {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.primary.withOpacity(0.6),
+                      color: AppColors.primary.withValues(alpha: 0.6),
                       blurRadius: 40,
                       spreadRadius: 10,
                     ),
@@ -110,7 +110,7 @@ class _SplashScreenState extends State<SplashScreen> {
                   .animate(onPlay: (controller) => controller.repeat())
                   .shimmer(
                     duration: 1500.ms,
-                    color: AppColors.primaryLight.withOpacity(0.4),
+                    color: AppColors.primaryLight.withValues(alpha: 0.4),
                   ),
 
               const SizedBox(height: 16),

@@ -1,0 +1,4 @@
+Analyzing ludo-tournament-app...                                
+
+   info - 'activeColor' is deprecated and shouldn't be used. Use activeThumbColor instead. This feature was deprecated after v3.31.0-2.0.pre - lib\screens\settings\settings_screen.dart:164:11 - deprecated_member_use
+

@@ -70,18 +70,18 @@ class _AchievementCard extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(14),
           color: unlocked
-              ? AppColors.primary.withOpacity(0.15)
+              ? AppColors.primary.withValues(alpha: 0.15)
               : AppColors.darkCard,
           border: Border.all(
             color: unlocked
-                ? AppColors.primary.withOpacity(0.5)
+                ? AppColors.primary.withValues(alpha: 0.5)
                 : AppColors.darkBorder,
             width: unlocked ? 1.5 : 1,
           ),
           boxShadow: unlocked
               ? [
                   BoxShadow(
-                    color: AppColors.primary.withOpacity(0.2),
+                    color: AppColors.primary.withValues(alpha: 0.2),
                     blurRadius: 8,
                   )
                 ]
@@ -180,7 +180,7 @@ class _AchievementCard extends StatelessWidget {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
                 color: achievement.unlocked
-                    ? AppColors.greenPlayer.withOpacity(0.2)
+                    ? AppColors.greenPlayer.withValues(alpha: 0.2)
                     : AppColors.darkCard,
               ),
               child: Text(

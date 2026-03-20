@@ -30,12 +30,12 @@ class TokenWidget extends StatelessWidget {
           shape: BoxShape.circle,
           color: color,
           border: Border.all(
-            color: isMovable ? Colors.white : color.withOpacity(0.8),
+            color: isMovable ? Colors.white : color.withValues(alpha: 0.8),
             width: isMovable ? 2.5 : 1.5,
           ),
           boxShadow: [
             BoxShadow(
-              color: color.withOpacity(isMovable ? 0.8 : 0.4),
+              color: color.withValues(alpha: isMovable ? 0.8 : 0.4),
               blurRadius: isMovable ? 12 : 4,
               spreadRadius: isMovable ? 2 : 0,
             ),
@@ -45,9 +45,9 @@ class TokenWidget extends StatelessWidget {
               : RadialGradient(
                   center: const Alignment(-0.3, -0.4),
                   colors: [
-                    color.withOpacity(0.95),
+                    color.withValues(alpha: 0.95),
                     color,
-                    color.withOpacity(0.8),
+                    color.withValues(alpha: 0.8),
                   ],
                 ),
         ),
@@ -59,7 +59,7 @@ class TokenWidget extends StatelessWidget {
                   height: 6,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.white.withOpacity(0.7),
+                    color: Colors.white.withValues(alpha: 0.7),
                   ),
                 ),
         ),

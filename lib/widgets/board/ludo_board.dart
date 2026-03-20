@@ -102,7 +102,7 @@ class BoardPainter extends CustomPainter {
 
   void _drawGrid(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = AppColors.darkBorder.withOpacity(0.3)
+      ..color = AppColors.darkBorder.withValues(alpha: 0.3)
       ..strokeWidth = 0.5
       ..style = PaintingStyle.stroke;
 
@@ -139,14 +139,14 @@ class BoardPainter extends CustomPainter {
       );
 
       // Outer fill
-      final bgPaint = Paint()..color = colors[i].withOpacity(0.15);
+      final bgPaint = Paint()..color = colors[i].withValues(alpha: 0.15);
       canvas.drawRRect(
           RRect.fromRectAndRadius(scaledRect, const Radius.circular(8)),
           bgPaint);
 
       // Border
       final borderPaint = Paint()
-        ..color = colors[i].withOpacity(0.6)
+        ..color = colors[i].withValues(alpha: 0.6)
         ..strokeWidth = 2
         ..style = PaintingStyle.stroke;
       canvas.drawRRect(
@@ -160,13 +160,13 @@ class BoardPainter extends CustomPainter {
         (rect.width - 1.6) * cellSize,
         (rect.height - 1.6) * cellSize,
       );
-      final innerPaint = Paint()..color = colors[i].withOpacity(0.25);
+      final innerPaint = Paint()..color = colors[i].withValues(alpha: 0.25);
       canvas.drawOval(innerRect, innerPaint);
     }
   }
 
   void _drawSafeZones(Canvas canvas) {
-    final starPaint = Paint()..color = Colors.white.withOpacity(0.3);
+    final starPaint = Paint()..color = Colors.white.withValues(alpha: 0.3);
 
     for (final safePos in BoardPaths.safePositions) {
       final cell = BoardPaths.mainPath[safePos];
@@ -235,7 +235,7 @@ class BoardPainter extends CustomPainter {
     ];
 
     for (int p = 0; p < 4; p++) {
-      final paint = Paint()..color = colors[p].withOpacity(0.35);
+      final paint = Paint()..color = colors[p].withValues(alpha: 0.35);
       for (final idx in approachCells[p]) {
         if (idx >= BoardPaths.mainPath.length) continue;
         final cell = BoardPaths.mainPath[idx];
@@ -255,7 +255,7 @@ class BoardPainter extends CustomPainter {
     ];
 
     for (int p = 0; p < 4; p++) {
-      final paint = Paint()..color = colors[p].withOpacity(0.5);
+      final paint = Paint()..color = colors[p].withValues(alpha: 0.5);
       final cells = BoardPaths.homeColumns[p]!;
       for (final cell in cells) {
         final rect = Rect.fromLTWH(
@@ -291,7 +291,7 @@ class BoardPainter extends CustomPainter {
     canvas.drawCircle(Offset(cx, cy), r, paint);
 
     // Inner white circle
-    final innerPaint = Paint()..color = Colors.white.withOpacity(0.9);
+    final innerPaint = Paint()..color = Colors.white.withValues(alpha: 0.9);
     canvas.drawCircle(Offset(cx, cy), r * 0.5, innerPaint);
 
     // Trophy emoji drawn via TextPainter
@@ -306,7 +306,7 @@ class BoardPainter extends CustomPainter {
 
   void _drawBorder(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = AppColors.primary.withOpacity(0.6)
+      ..color = AppColors.primary.withValues(alpha: 0.6)
       ..strokeWidth = 3
       ..style = PaintingStyle.stroke;
     canvas.drawRRect(

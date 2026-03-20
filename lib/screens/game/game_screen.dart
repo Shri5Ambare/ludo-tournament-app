@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/constants/app_constants.dart';
 import '../../models/game_models.dart';
 import '../../providers/chat_provider.dart';
 import '../../providers/game_provider.dart';
@@ -189,9 +190,9 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: AppColors.accent.withOpacity(0.15),
+                color: AppColors.accent.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: AppColors.accent.withOpacity(0.4)),
+                border: Border.all(color: AppColors.accent.withValues(alpha: 0.4)),
               ),
               child: Text(
                 _isFinals
@@ -238,7 +239,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
               color: isCurrent
-                  ? player.color.withOpacity(0.2)
+                  ? player.color.withValues(alpha: 0.2)
                   : AppColors.darkCard,
               border: Border.all(
                 color: isCurrent ? player.color : AppColors.darkBorder,
@@ -247,7 +248,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
               boxShadow: isCurrent
                   ? [
                       BoxShadow(
-                          color: player.color.withOpacity(0.3),
+                          color: player.color.withValues(alpha: 0.3),
                           blurRadius: 8)
                     ]
                   : [],
@@ -285,9 +286,9 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                                 ? player.color
                                 : tok.isAtHome
                                     ? Colors.white12
-                                    : player.color.withOpacity(0.55),
+                                    : player.color.withValues(alpha: 0.55),
                             border: Border.all(
-                                color: player.color.withOpacity(0.4),
+                                color: player.color.withValues(alpha: 0.4),
                                 width: 0.5),
                           ),
                         );
@@ -324,7 +325,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       decoration: BoxDecoration(
         color: AppColors.darkBg,
         border: Border(
-            top: BorderSide(color: AppColors.darkBorder.withOpacity(0.5))),
+            top: BorderSide(color: AppColors.darkBorder.withValues(alpha: 0.5))),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,

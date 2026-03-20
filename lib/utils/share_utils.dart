@@ -32,10 +32,10 @@ class ResultShareCard extends StatelessWidget {
           end: Alignment.bottomRight,
           colors: [Color(0xFF1A1035), Color(0xFF2D1B69)],
         ),
-        border: Border.all(color: AppColors.primary.withOpacity(0.5), width: 2),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.5), width: 2),
         boxShadow: [
           BoxShadow(
-              color: AppColors.primary.withOpacity(0.3), blurRadius: 30),
+              color: AppColors.primary.withValues(alpha: 0.3), blurRadius: 30),
         ],
       ),
       child: Column(

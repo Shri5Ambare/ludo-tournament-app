@@ -74,7 +74,7 @@ class _TournamentHistoryCard extends StatelessWidget {
         color: AppColors.darkCard,
         border: Border.all(
           color: isCompleted
-              ? AppColors.accent.withOpacity(0.3)
+              ? AppColors.accent.withValues(alpha: 0.3)
               : AppColors.darkBorder,
         ),
       ),
@@ -96,8 +96,8 @@ class _TournamentHistoryCard extends StatelessWidget {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(8),
                   color: isCompleted
-                      ? AppColors.greenPlayer.withOpacity(0.15)
-                      : AppColors.accent.withOpacity(0.1),
+                      ? AppColors.greenPlayer.withValues(alpha: 0.15)
+                      : AppColors.accent.withValues(alpha: 0.1),
                 ),
                 child: Text(
                   isCompleted ? 'Completed' : 'Incomplete',

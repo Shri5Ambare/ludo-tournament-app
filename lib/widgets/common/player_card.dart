@@ -28,7 +28,7 @@ class PlayerCard extends StatelessWidget {
       duration: const Duration(milliseconds: 300),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: isCurrentTurn ? color.withOpacity(0.15) : AppColors.darkCard,
+        color: isCurrentTurn ? color.withValues(alpha: 0.15) : AppColors.darkCard,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: isCurrentTurn ? color : AppColors.darkBorder,
@@ -37,7 +37,7 @@ class PlayerCard extends StatelessWidget {
         boxShadow: isCurrentTurn
             ? [
                 BoxShadow(
-                  color: color.withOpacity(0.3),
+                  color: color.withValues(alpha: 0.3),
                   blurRadius: 12,
                   spreadRadius: 2,
                 )
@@ -55,7 +55,7 @@ class PlayerCard extends StatelessWidget {
                 height: 28,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: color.withOpacity(0.3),
+                  color: color.withValues(alpha: 0.3),
                   border: Border.all(color: color, width: 1.5),
                 ),
                 child: Center(
@@ -83,7 +83,7 @@ class PlayerCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                   decoration: BoxDecoration(
-                    color: AppColors.info.withOpacity(0.2),
+                    color: AppColors.info.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text('AI',
@@ -110,8 +110,8 @@ class PlayerCard extends StatelessWidget {
                   color: isDone
                       ? color
                       : isHome
-                          ? color.withOpacity(0.2)
-                          : color.withOpacity(0.6),
+                          ? color.withValues(alpha: 0.2)
+                          : color.withValues(alpha: 0.6),
                   border: Border.all(color: color, width: 1),
                 ),
               );

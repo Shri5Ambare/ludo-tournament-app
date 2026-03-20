@@ -123,7 +123,7 @@ class HomeScreen extends ConsumerWidget {
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
       decoration: BoxDecoration(
         border: Border(
-          top: BorderSide(color: AppColors.darkBorder.withOpacity(0.5)),
+          top: BorderSide(color: AppColors.darkBorder.withValues(alpha: 0.5)),
         ),
       ),
       child: Row(
@@ -186,16 +186,16 @@ class _MenuItem {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              color.withOpacity(isFeature ? 0.35 : 0.18),
-              color.withOpacity(isFeature ? 0.15 : 0.06),
+              color.withValues(alpha: isFeature ? 0.35 : 0.18),
+              color.withValues(alpha: isFeature ? 0.15 : 0.06),
             ],
           ),
           border: Border.all(
-            color: color.withOpacity(isFeature ? 0.7 : 0.3),
+            color: color.withValues(alpha: isFeature ? 0.7 : 0.3),
             width: isFeature ? 1.5 : 1,
           ),
           boxShadow: isFeature
-              ? [BoxShadow(color: color.withOpacity(0.25), blurRadius: 16)]
+              ? [BoxShadow(color: color.withValues(alpha: 0.25), blurRadius: 16)]
               : null,
         ),
         padding: const EdgeInsets.all(16),

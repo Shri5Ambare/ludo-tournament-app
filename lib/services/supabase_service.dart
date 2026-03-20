@@ -368,7 +368,7 @@ class SupabaseService {
   void joinPresence(String roomId) {
     _presenceChannel = _db.channel('presence:$roomId');
     _presenceChannel!
-      ..onPresenceSync(callback: (_) {})
+      ..onPresenceSync((_) {})
       ..subscribe((status, _) async {
         if (status == RealtimeSubscribeStatus.subscribed) {
           await _presenceChannel!.track({

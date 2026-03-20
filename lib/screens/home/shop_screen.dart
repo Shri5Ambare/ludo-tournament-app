@@ -43,9 +43,9 @@ class _ShopScreenState extends State<ShopScreen>
             margin: const EdgeInsets.only(right: 16),
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
             decoration: BoxDecoration(
-              color: AppColors.accent.withOpacity(0.15),
+              color: AppColors.accent.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: AppColors.accent.withOpacity(0.4)),
+              border: Border.all(color: AppColors.accent.withValues(alpha: 0.4)),
             ),
             child: Row(
               children: [
@@ -177,11 +177,11 @@ class _ShopGrid extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(18),
             color: item.owned
-                ? AppColors.greenPlayer.withOpacity(0.08)
+                ? AppColors.greenPlayer.withValues(alpha: 0.08)
                 : AppColors.darkCard,
             border: Border.all(
               color: item.owned
-                  ? AppColors.greenPlayer.withOpacity(0.4)
+                  ? AppColors.greenPlayer.withValues(alpha: 0.4)
                   : AppColors.darkBorder,
             ),
           ),
@@ -200,7 +200,7 @@ class _ShopGrid extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 4),
                       decoration: BoxDecoration(
-                        color: AppColors.greenPlayer.withOpacity(0.15),
+                        color: AppColors.greenPlayer.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text('✅ Owned',
@@ -214,12 +214,12 @@ class _ShopGrid extends StatelessWidget {
                             horizontal: 14, vertical: 6),
                         decoration: BoxDecoration(
                           color: canAfford
-                              ? AppColors.accent.withOpacity(0.15)
+                              ? AppColors.accent.withValues(alpha: 0.15)
                               : Colors.white10,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
                             color: canAfford
-                                ? AppColors.accent.withOpacity(0.5)
+                                ? AppColors.accent.withValues(alpha: 0.5)
                                 : Colors.white24,
                           ),
                         ),

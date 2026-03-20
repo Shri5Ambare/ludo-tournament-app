@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/constants/app_constants.dart';
 import '../../models/game_models.dart';
 import '../../models/tournament_model.dart';
 import '../../providers/tournament_provider.dart';
@@ -137,7 +138,7 @@ class _GroupCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(18),
         color: AppColors.darkCard,
         border: Border.all(
-            color: groupColor.withOpacity(0.5),
+            color: groupColor.withValues(alpha: 0.5),
             width: group.isComplete ? 1.5 : 1),
       ),
       child: Column(
@@ -147,7 +148,7 @@ class _GroupCard extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
               borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
-              color: groupColor.withOpacity(0.15),
+              color: groupColor.withValues(alpha: 0.15),
             ),
             child: Row(
               children: [
@@ -160,7 +161,7 @@ class _GroupCard extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(8),
-                      color: AppColors.greenPlayer.withOpacity(0.2),
+                      color: AppColors.greenPlayer.withValues(alpha: 0.2),
                     ),
                     child: Text('✅ Done',
                         style: GoogleFonts.nunito(
@@ -171,7 +172,7 @@ class _GroupCard extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(8),
-                      color: AppColors.accent.withOpacity(0.15),
+                      color: AppColors.accent.withValues(alpha: 0.15),
                     ),
                     child: Text('Pending',
                         style: GoogleFonts.nunito(
@@ -236,13 +237,13 @@ class _FinalsCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         gradient: LinearGradient(
           colors: [
-            AppColors.accent.withOpacity(0.2),
-            AppColors.primary.withOpacity(0.15),
+            AppColors.accent.withValues(alpha: 0.2),
+            AppColors.primary.withValues(alpha: 0.15),
           ],
         ),
-        border: Border.all(color: AppColors.accent.withOpacity(0.6), width: 2),
+        border: Border.all(color: AppColors.accent.withValues(alpha: 0.6), width: 2),
         boxShadow: [
-          BoxShadow(color: AppColors.accent.withOpacity(0.2), blurRadius: 20),
+          BoxShadow(color: AppColors.accent.withValues(alpha: 0.2), blurRadius: 20),
         ],
       ),
       child: Column(
@@ -346,7 +347,7 @@ class _RoundBadge extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         color: AppColors.darkCard,
-        border: Border.all(color: AppColors.primary.withOpacity(0.4)),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.4)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

@@ -134,10 +134,10 @@ class _LeaderRow extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
         color: isTop3
-            ? rankColor.withOpacity(0.08)
+            ? rankColor.withValues(alpha: 0.08)
             : AppColors.darkCard,
         border: Border.all(
-          color: isTop3 ? rankColor.withOpacity(0.4) : AppColors.darkBorder,
+          color: isTop3 ? rankColor.withValues(alpha: 0.4) : AppColors.darkBorder,
           width: isTop3 ? 1.5 : 1,
         ),
       ),
@@ -160,8 +160,8 @@ class _LeaderRow extends StatelessWidget {
             height: 42,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: rankColor.withOpacity(0.15),
-              border: Border.all(color: rankColor.withOpacity(0.4)),
+              color: rankColor.withValues(alpha: 0.15),
+              border: Border.all(color: rankColor.withValues(alpha: 0.4)),
             ),
             child: Center(
                 child: Text(avatar, style: const TextStyle(fontSize: 20))),

@@ -151,9 +151,9 @@ class _TournamentSetupScreenState extends ConsumerState<TournamentSetupScreen> {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
         gradient: LinearGradient(
-          colors: [AppColors.primary.withOpacity(0.3), AppColors.primaryDark.withOpacity(0.2)],
+          colors: [AppColors.primary.withValues(alpha: 0.3), AppColors.primaryDark.withValues(alpha: 0.2)],
         ),
-        border: Border.all(color: AppColors.primary.withOpacity(0.5)),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.5)),
       ),
       child: Row(
         children: [
@@ -217,7 +217,7 @@ class _TournamentSetupScreenState extends ConsumerState<TournamentSetupScreen> {
         height: 44,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: enabled ? AppColors.primary.withOpacity(0.2) : AppColors.darkCard,
+          color: enabled ? AppColors.primary.withValues(alpha: 0.2) : AppColors.darkCard,
           border: Border.all(
               color: enabled ? AppColors.primary : AppColors.darkBorder),
         ),
@@ -233,7 +233,7 @@ class _TournamentSetupScreenState extends ConsumerState<TournamentSetupScreen> {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         color: AppColors.darkCard,
-        border: Border.all(color: AppColors.accent.withOpacity(0.3)),
+        border: Border.all(color: AppColors.accent.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
@@ -285,8 +285,8 @@ class _TournamentSetupScreenState extends ConsumerState<TournamentSetupScreen> {
                 height: 28,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: AppColors.primary.withOpacity(0.2),
-                  border: Border.all(color: AppColors.primary.withOpacity(0.5)),
+                  color: AppColors.primary.withValues(alpha: 0.2),
+                  border: Border.all(color: AppColors.primary.withValues(alpha: 0.5)),
                 ),
                 child: Center(
                   child: Text('${i + 1}',
@@ -337,7 +337,7 @@ class _TournamentSetupScreenState extends ConsumerState<TournamentSetupScreen> {
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
-              color: sel ? AppColors.primary.withOpacity(0.2) : AppColors.darkCard,
+              color: sel ? AppColors.primary.withValues(alpha: 0.2) : AppColors.darkCard,
               border: Border.all(
                   color: sel ? AppColors.primary : AppColors.darkBorder,
                   width: sel ? 2 : 1),
@@ -410,7 +410,7 @@ class _TournamentSetupScreenState extends ConsumerState<TournamentSetupScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(10),
-                color: sel ? AppColors.accent.withOpacity(0.15) : AppColors.darkCard,
+                color: sel ? AppColors.accent.withValues(alpha: 0.15) : AppColors.darkCard,
                 border: Border.all(
                     color: sel ? AppColors.accent : AppColors.darkBorder),
               ),
@@ -435,7 +435,7 @@ class _TournamentSetupScreenState extends ConsumerState<TournamentSetupScreen> {
           backgroundColor: AppColors.primary,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           elevation: 8,
-          shadowColor: AppColors.primary.withOpacity(0.5),
+          shadowColor: AppColors.primary.withValues(alpha: 0.5),
         ),
         child: Text('🏆 Start Tournament',
             style: GoogleFonts.fredoka(fontSize: 20, color: Colors.white)),

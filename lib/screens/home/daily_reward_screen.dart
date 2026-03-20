@@ -82,11 +82,11 @@ class _DailyRewardScreenState extends State<DailyRewardScreen> {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
                 gradient: LinearGradient(colors: [
-                  AppColors.accent.withOpacity(0.2),
-                  AppColors.primary.withOpacity(0.15),
+                  AppColors.accent.withValues(alpha: 0.2),
+                  AppColors.primary.withValues(alpha: 0.15),
                 ]),
                 border:
-                    Border.all(color: AppColors.accent.withOpacity(0.4)),
+                    Border.all(color: AppColors.accent.withValues(alpha: 0.4)),
               ),
               child: Column(
                 children: [
@@ -135,13 +135,13 @@ class _DailyRewardScreenState extends State<DailyRewardScreen> {
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(14),
                     color: isDone
-                        ? AppColors.greenPlayer.withOpacity(0.1)
+                        ? AppColors.greenPlayer.withValues(alpha: 0.1)
                         : isToday
-                            ? AppColors.accent.withOpacity(0.15)
+                            ? AppColors.accent.withValues(alpha: 0.15)
                             : AppColors.darkCard,
                     border: Border.all(
                       color: isDone
-                          ? AppColors.greenPlayer.withOpacity(0.4)
+                          ? AppColors.greenPlayer.withValues(alpha: 0.4)
                           : isToday
                               ? AppColors.accent
                               : AppColors.darkBorder,
@@ -180,8 +180,8 @@ class _DailyRewardScreenState extends State<DailyRewardScreen> {
                 color: AppColors.darkCard,
                 border: Border.all(
                     color: _claimed
-                        ? AppColors.greenPlayer.withOpacity(0.3)
-                        : AppColors.primary.withOpacity(0.5)),
+                        ? AppColors.greenPlayer.withValues(alpha: 0.3)
+                        : AppColors.primary.withValues(alpha: 0.5)),
               ),
               child: Column(
                 children: [

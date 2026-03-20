@@ -44,7 +44,7 @@ class ChatFab extends ConsumerWidget {
                 width: 1.5,
               ),
               boxShadow: isOpen
-                  ? [BoxShadow(color: AppColors.primary.withOpacity(0.4), blurRadius: 12)]
+                  ? [BoxShadow(color: AppColors.primary.withValues(alpha: 0.4), blurRadius: 12)]
                   : null,
             ),
             child: Center(
@@ -172,7 +172,7 @@ class _GameChatPanelState extends ConsumerState<GameChatPanel>
           color: AppColors.darkSurface,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
           border: Border.all(color: AppColors.darkBorder),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.5), blurRadius: 20, offset: const Offset(0, -4))],
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.5), blurRadius: 20, offset: const Offset(0, -4))],
         ),
         child: Column(
           children: [
@@ -276,7 +276,7 @@ class _GameChatPanelState extends ConsumerState<GameChatPanel>
               width: 38, height: 38,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: _showEmoji ? AppColors.primary.withOpacity(0.3) : AppColors.darkBg,
+                color: _showEmoji ? AppColors.primary.withValues(alpha: 0.3) : AppColors.darkBg,
                 border: Border.all(color: _showEmoji ? AppColors.primary : AppColors.darkBorder),
               ),
               child: const Center(child: Text('😊', style: TextStyle(fontSize: 18))),
@@ -316,7 +316,7 @@ class _GameChatPanelState extends ConsumerState<GameChatPanel>
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: AppColors.primary,
-                boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.4), blurRadius: 8)],
+                boxShadow: [BoxShadow(color: AppColors.primary.withValues(alpha: 0.4), blurRadius: 8)],
               ),
               child: const Center(child: Icon(Icons.send_rounded, color: Colors.white, size: 18)),
             ),
@@ -348,7 +348,7 @@ class _ChatBubble extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.06),
+            color: Colors.white.withValues(alpha: 0.06),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Text(message.content,
@@ -408,14 +408,14 @@ class _ChatBubble extends StatelessWidget {
                   constraints: const BoxConstraints(maxWidth: 220),
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
-                    color: isSelf ? AppColors.primary.withOpacity(0.85) : AppColors.darkCard,
+                    color: isSelf ? AppColors.primary.withValues(alpha: 0.85) : AppColors.darkCard,
                     borderRadius: BorderRadius.only(
                       topLeft: const Radius.circular(14),
                       topRight: const Radius.circular(14),
                       bottomLeft: Radius.circular(isSelf ? 14 : 4),
                       bottomRight: Radius.circular(isSelf ? 4 : 14),
                     ),
-                    border: isSelf ? null : Border.all(color: message.playerColor.withOpacity(0.3)),
+                    border: isSelf ? null : Border.all(color: message.playerColor.withValues(alpha: 0.3)),
                   ),
                   child: Text(message.content, style: GoogleFonts.nunito(fontSize: 13, color: Colors.white)),
                 ),
@@ -446,7 +446,7 @@ class _Dot extends StatelessWidget {
         width: 20, height: 20,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: color.withOpacity(0.25),
+          color: color.withValues(alpha: 0.25),
           border: Border.all(color: color, width: 1.5),
         ),
       );

@@ -218,7 +218,7 @@ class _FriendTile extends ConsumerWidget {
       background: Container(
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 20),
-        color: AppColors.error.withOpacity(0.8),
+        color: AppColors.error.withValues(alpha: 0.8),
         child: const Icon(Icons.person_remove_rounded, color: Colors.white),
       ),
       confirmDismiss: (_) => _confirmRemove(context),
@@ -240,7 +240,7 @@ class _FriendTile extends ConsumerWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: AppColors.darkBg,
-                  border: Border.all(color: friend.statusColor.withOpacity(0.5), width: 2),
+                  border: Border.all(color: friend.statusColor.withValues(alpha: 0.5), width: 2),
                 ),
                 child: Center(
                   child: Text(friend.avatarEmoji, style: const TextStyle(fontSize: 22)),
@@ -392,7 +392,7 @@ class _WatchButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.06),
+          color: Colors.white.withValues(alpha: 0.06),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(color: Colors.white12),
         ),
@@ -416,7 +416,7 @@ class _JoinButton extends StatelessWidget {
         context.push('/online/lobby', extra: {'isHost': false, 'code': roomCode});
       },
       style: ElevatedButton.styleFrom(
-        backgroundColor: const Color(0xFFFF9800).withOpacity(0.2),
+        backgroundColor: const Color(0xFFFF9800).withValues(alpha: 0.2),
         foregroundColor: const Color(0xFFFF9800),
         minimumSize: const Size(70, 34),
         padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -443,9 +443,9 @@ class _OutgoingRequestTile extends ConsumerWidget {
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: AppColors.darkCard.withOpacity(0.6),
+        color: AppColors.darkCard.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.darkBorder.withOpacity(0.5)),
+        border: Border.all(color: AppColors.darkBorder.withValues(alpha: 0.5)),
       ),
       child: Row(
         children: [
@@ -584,7 +584,7 @@ class _SearchResultTileState extends ConsumerState<_SearchResultTile> {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: AppColors.darkBg,
-              border: Border.all(color: widget.user.statusColor.withOpacity(0.4)),
+              border: Border.all(color: widget.user.statusColor.withValues(alpha: 0.4)),
             ),
             child: Center(child: Text(widget.user.avatarEmoji, style: const TextStyle(fontSize: 20))),
           ),
@@ -610,9 +610,9 @@ class _SearchResultTileState extends ConsumerState<_SearchResultTile> {
             ? Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppColors.greenPlayer.withOpacity(0.15),
+                  color: AppColors.greenPlayer.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppColors.greenPlayer.withOpacity(0.3)),
+                  border: Border.all(color: AppColors.greenPlayer.withValues(alpha: 0.3)),
                 ),
                 child: Text('Friends', style: GoogleFonts.nunito(fontSize: 11, color: AppColors.greenPlayer)),
               )
@@ -649,9 +649,9 @@ class _RequestsBanner extends ConsumerWidget {
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.primary.withOpacity(0.1),
+        color: AppColors.primary.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -719,8 +719,8 @@ class _ActionBtn extends StatelessWidget {
         width: 32, height: 32,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: color.withOpacity(0.15),
-          border: Border.all(color: color.withOpacity(0.5)),
+          color: color.withValues(alpha: 0.15),
+          border: Border.all(color: color.withValues(alpha: 0.5)),
         ),
         child: Center(child: Text(label, style: TextStyle(color: color, fontSize: 14))),
       ),
@@ -741,10 +741,10 @@ class _GameInviteBanner extends ConsumerWidget {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [AppColors.accent.withOpacity(0.15), AppColors.primary.withOpacity(0.1)],
+          colors: [AppColors.accent.withValues(alpha: 0.15), AppColors.primary.withValues(alpha: 0.1)],
         ),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.accent.withOpacity(0.4)),
+        border: Border.all(color: AppColors.accent.withValues(alpha: 0.4)),
       ),
       child: Row(
         children: [

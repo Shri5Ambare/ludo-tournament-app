@@ -1,7 +1,7 @@
 // lib/widgets/dice/dice_widget.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:google_fonts/google_fonts.dart';
+
 import '../../core/theme/app_theme.dart';
 
 class DiceWidget extends StatefulWidget {
@@ -74,7 +74,7 @@ class _DiceWidgetState extends State<DiceWidget>
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
             color: widget.canRoll
-                ? widget.playerColor.withOpacity(0.15)
+                ? widget.playerColor.withValues(alpha: 0.15)
                 : AppColors.darkCard,
             border: Border.all(
               color: widget.canRoll ? widget.playerColor : AppColors.darkBorder,
@@ -83,7 +83,7 @@ class _DiceWidgetState extends State<DiceWidget>
             boxShadow: widget.canRoll
                 ? [
                     BoxShadow(
-                      color: widget.playerColor.withOpacity(0.4),
+                      color: widget.playerColor.withValues(alpha: 0.4),
                       blurRadius: 16,
                       spreadRadius: 2,
                     )
@@ -128,7 +128,7 @@ class _DiceFace extends StatelessWidget {
                 shape: BoxShape.circle,
                 color: color,
                 boxShadow: [
-                  BoxShadow(color: color.withOpacity(0.5), blurRadius: 4)
+                  BoxShadow(color: color.withValues(alpha: 0.5), blurRadius: 4)
                 ],
               ),
             ),

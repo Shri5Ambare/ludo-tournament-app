@@ -10,6 +10,7 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/game_models.dart';
+import '../core/constants/app_constants.dart';
 
 // ─── Spectator models ────────────────────────────────────────────────────────
 

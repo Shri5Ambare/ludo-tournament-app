@@ -208,10 +208,10 @@ class _NotificationBanner extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(14),
           color: const Color(0xFF1A1035),
-          border: Border.all(color: const Color(0xFF6C3CE1).withOpacity(0.5)),
+          border: Border.all(color: const Color(0xFF6C3CE1).withValues(alpha: 0.5)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.4),
+              color: Colors.black.withValues(alpha: 0.4),
               blurRadius: 16,
               offset: const Offset(0, 4),
             ),

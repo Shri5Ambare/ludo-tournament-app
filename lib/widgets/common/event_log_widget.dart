@@ -15,7 +15,7 @@ class EventLogWidget extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: AppColors.darkCard.withOpacity(0.85),
+        color: AppColors.darkCard.withValues(alpha: 0.85),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.darkBorder),
       ),
@@ -29,7 +29,7 @@ class EventLogWidget extends StatelessWidget {
               e.value,
               style: GoogleFonts.nunito(
                 fontSize: 11,
-                color: Colors.white.withOpacity(opacity),
+                color: Colors.white.withValues(alpha: opacity),
                 fontStyle:
                     e.key > 0 ? FontStyle.italic : FontStyle.normal,
               ),

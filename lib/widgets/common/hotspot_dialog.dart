@@ -117,8 +117,8 @@ class _HotspotOption extends StatelessWidget {
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(18),
-          color: color.withOpacity(0.12),
-          border: Border.all(color: color.withOpacity(0.5)),
+          color: color.withValues(alpha: 0.12),
+          border: Border.all(color: color.withValues(alpha: 0.5)),
         ),
         child: Column(
           children: [

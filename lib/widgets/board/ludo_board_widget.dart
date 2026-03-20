@@ -3,7 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/board_paths.dart';
-import '../../core/theme/app_theme.dart';
+
 import '../../core/theme/board_themes.dart';
 import '../../models/game_models.dart';
 import '../../providers/game_provider.dart';
@@ -199,21 +199,21 @@ class _TokenWidgetState extends State<_TokenWidget>
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: widget.isFinished
-                    ? color.withOpacity(0.9)
+                    ? color.withValues(alpha: 0.9)
                     : color,
                 border: Border.all(
                   color: widget.isMovable
                       ? Colors.white
-                      : color.withOpacity(0.6),
+                      : color.withValues(alpha: 0.6),
                   width: widget.isMovable ? 2.5 : 1.5,
                 ),
                 boxShadow: [
                   BoxShadow(
                     color: widget.isMovable
-                        ? Colors.white.withOpacity(0.6)
+                        ? Colors.white.withValues(alpha: 0.6)
                         : widget.isFinished
-                            ? color.withOpacity(0.7)
-                            : color.withOpacity(0.3),
+                            ? color.withValues(alpha: 0.7)
+                            : color.withValues(alpha: 0.3),
                     blurRadius: widget.isMovable
                         ? _glow.value
                         : widget.isFinished
@@ -286,13 +286,13 @@ class LudoBoardPainter extends CustomPainter {
     ];
 
     for (int i = 0; i < 4; i++) {
-      final paint = Paint()..color = colors[i].withOpacity(0.15);
+      final paint = Paint()..color = colors[i].withValues(alpha: 0.15);
       canvas.drawRRect(
         RRect.fromRectAndRadius(rects[i].deflate(2), const Radius.circular(8)),
         paint,
       );
       final borderPaint = Paint()
-        ..color = colors[i].withOpacity(0.4)
+        ..color = colors[i].withValues(alpha: 0.4)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1.5;
       canvas.drawRRect(
@@ -312,17 +312,17 @@ class LudoBoardPainter extends CustomPainter {
         final cx = pos[1] * cw + cw / 2;
         final cy = pos[0] * ch + ch / 2;
         final r = cw * 0.35;
-        final circlePaint = Paint()..color = colors[i].withOpacity(0.3);
+        final circlePaint = Paint()..color = colors[i].withValues(alpha: 0.3);
         canvas.drawCircle(Offset(cx, cy), r, circlePaint);
         // Neon glow ring
         if (theme.glowEffect) {
           final glowPaint = Paint()
-            ..color = colors[i].withOpacity(0.15)
+            ..color = colors[i].withValues(alpha: 0.15)
             ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
           canvas.drawCircle(Offset(cx, cy), r + 4, glowPaint);
         }
         final circleStroke = Paint()
-          ..color = colors[i].withOpacity(0.7)
+          ..color = colors[i].withValues(alpha: 0.7)
           ..style = PaintingStyle.stroke
           ..strokeWidth = 1.5;
         canvas.drawCircle(Offset(cx, cy), r, circleStroke);
@@ -351,12 +351,12 @@ class LudoBoardPainter extends CustomPainter {
         // Glow on safe cells for neon/diwali
         if (theme.glowEffect) {
           final glowPaint = Paint()
-            ..color = theme.safeCellColor.withOpacity(0.4)
+            ..color = theme.safeCellColor.withValues(alpha: 0.4)
             ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
           canvas.drawRect(rect, glowPaint);
         }
         _drawStar(canvas, rect.center, cw * 0.25,
-            Colors.white.withOpacity(theme.glowEffect ? 0.55 : 0.3));
+            Colors.white.withValues(alpha: theme.glowEffect ? 0.55 : 0.3));
       }
     }
 
@@ -367,7 +367,7 @@ class LudoBoardPainter extends CustomPainter {
       final rect = Rect.fromLTWH(
         cell[1] * cw + 0.5, cell[0] * ch + 0.5, cw - 1, ch - 1,
       );
-      final paint = Paint()..color = _playerColors[p].withOpacity(0.5);
+      final paint = Paint()..color = _playerColors[p].withValues(alpha: 0.5);
       canvas.drawRect(rect, paint);
     }
   }
@@ -382,10 +382,10 @@ class LudoBoardPainter extends CustomPainter {
           cell[1] * cw + 0.5, cell[0] * ch + 0.5, cw - 1, ch - 1,
         );
         final paint = Paint()
-          ..color = colors[p].withOpacity(0.2 + i * 0.05);
+          ..color = colors[p].withValues(alpha: 0.2 + i * 0.05);
         canvas.drawRect(rect, paint);
         final borderPaint = Paint()
-          ..color = colors[p].withOpacity(0.5)
+          ..color = colors[p].withValues(alpha: 0.5)
           ..style = PaintingStyle.stroke
           ..strokeWidth = 0.5;
         canvas.drawRect(rect, borderPaint);
@@ -420,18 +420,18 @@ class LudoBoardPainter extends CustomPainter {
         ..lineTo(triangles[i][1].dx, triangles[i][1].dy)
         ..lineTo(triangles[i][2].dx, triangles[i][2].dy)
         ..close();
-      final paint = Paint()..color = colors[i].withOpacity(0.35);
+      final paint = Paint()..color = colors[i].withValues(alpha: 0.35);
       canvas.drawPath(path, paint);
       if (theme.glowEffect) {
         final glowPaint = Paint()
-          ..color = colors[i].withOpacity(0.1)
+          ..color = colors[i].withValues(alpha: 0.1)
           ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
         canvas.drawPath(path, glowPaint);
       }
     }
 
     _drawStar(canvas, Offset(cx, cy), cw * 0.8,
-        Colors.white.withOpacity(theme.glowEffect ? 0.7 : 0.5));
+        Colors.white.withValues(alpha: theme.glowEffect ? 0.7 : 0.5));
   }
 
   void _drawGrid(Canvas canvas, Size size, double cw, double ch) {

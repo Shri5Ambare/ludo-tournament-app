@@ -146,7 +146,7 @@ class _GameLobbyScreenState extends ConsumerState<GameLobbyScreen> {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(14),
             color: AppColors.darkCard,
-            border: Border.all(color: color.withOpacity(0.4)),
+            border: Border.all(color: color.withValues(alpha: 0.4)),
           ),
           child: Row(
             children: [
@@ -155,7 +155,7 @@ class _GameLobbyScreenState extends ConsumerState<GameLobbyScreen> {
                 height: 36,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: color.withOpacity(0.2),
+                  color: color.withValues(alpha: 0.2),
                   border: Border.all(color: color, width: 2),
                 ),
                 child: Center(
@@ -194,7 +194,7 @@ class _GameLobbyScreenState extends ConsumerState<GameLobbyScreen> {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(8),
                       color: playerTypes[i] == PlayerType.ai
-                          ? AppColors.primary.withOpacity(0.3)
+                          ? AppColors.primary.withValues(alpha: 0.3)
                           : AppColors.darkBorder,
                     ),
                     child: Text(
@@ -256,7 +256,7 @@ class _GameLobbyScreenState extends ConsumerState<GameLobbyScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(10),
-                color: sel ? AppColors.accent.withOpacity(0.2) : AppColors.darkCard,
+                color: sel ? AppColors.accent.withValues(alpha: 0.2) : AppColors.darkCard,
                 border: Border.all(
                   color: sel ? AppColors.accent : AppColors.darkBorder,
                 ),

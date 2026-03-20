@@ -151,7 +151,7 @@ class _SpectatorScreenState extends ConsumerState<SpectatorScreen> {
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 10, vertical: 4),
                               decoration: BoxDecoration(
-                                color: Colors.black.withOpacity(0.5),
+                                color: Colors.black.withValues(alpha: 0.5),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
@@ -233,10 +233,10 @@ class _SpectatorScreenState extends ConsumerState<SpectatorScreen> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: currentPlayer.color.withOpacity(0.15),
+                  color: currentPlayer.color.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
-                      color: currentPlayer.color.withOpacity(0.4)),
+                      color: currentPlayer.color.withValues(alpha: 0.4)),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -292,7 +292,7 @@ class _SpectatorScreenState extends ConsumerState<SpectatorScreen> {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
               color:
-                  isCurrent ? player.color.withOpacity(0.2) : AppColors.darkCard,
+                  isCurrent ? player.color.withValues(alpha: 0.2) : AppColors.darkCard,
               border: Border.all(
                 color: isCurrent ? player.color : AppColors.darkBorder,
                 width: isCurrent ? 2 : 1,
@@ -300,7 +300,7 @@ class _SpectatorScreenState extends ConsumerState<SpectatorScreen> {
               boxShadow: isCurrent
                   ? [
                       BoxShadow(
-                          color: player.color.withOpacity(0.3),
+                          color: player.color.withValues(alpha: 0.3),
                           blurRadius: 8)
                     ]
                   : [],
@@ -331,7 +331,7 @@ class _SpectatorScreenState extends ConsumerState<SpectatorScreen> {
                                 ? player.color
                                 : tok.isAtHome
                                     ? Colors.white12
-                                    : player.color.withOpacity(0.55),
+                                    : player.color.withValues(alpha: 0.55),
                           ),
                         );
                       }),
@@ -417,7 +417,7 @@ class _SpectatorCountBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.06),
+        color: Colors.white.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: Colors.white12),
       ),
@@ -503,7 +503,7 @@ class _SpectatorChatFab extends ConsumerWidget {
                   width: 1.5),
               boxShadow: isOpen
                   ? [BoxShadow(
-                      color: AppColors.primary.withOpacity(0.4), blurRadius: 12)]
+                      color: AppColors.primary.withValues(alpha: 0.4), blurRadius: 12)]
                   : null,
             ),
             child: Center(
@@ -623,7 +623,7 @@ class _SpectatorChatPanelState extends ConsumerState<_SpectatorChatPanel> {
         border: Border.all(color: AppColors.darkBorder),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.5),
+              color: Colors.black.withValues(alpha: 0.5),
               blurRadius: 16,
               offset: const Offset(0, -4)),
         ],
@@ -730,7 +730,7 @@ class _SpectatorChatPanelState extends ConsumerState<_SpectatorChatPanel> {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: _showEmoji
-                          ? AppColors.primary.withOpacity(0.3)
+                          ? AppColors.primary.withValues(alpha: 0.3)
                           : AppColors.darkBg,
                       border: Border.all(
                           color: _showEmoji
@@ -783,7 +783,7 @@ class _SpectatorChatPanelState extends ConsumerState<_SpectatorChatPanel> {
                       color: AppColors.primary,
                       boxShadow: [
                         BoxShadow(
-                            color: AppColors.primary.withOpacity(0.4),
+                            color: AppColors.primary.withValues(alpha: 0.4),
                             blurRadius: 8)
                       ],
                     ),
@@ -818,7 +818,7 @@ class _SpectatorBubble extends StatelessWidget {
             padding:
                 const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.05),
+              color: Colors.white.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(msg.content,
@@ -865,7 +865,7 @@ class _SpectatorBubble extends StatelessWidget {
                         horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
                       color: msg.isSelf
-                          ? AppColors.primary.withOpacity(0.8)
+                          ? AppColors.primary.withValues(alpha: 0.8)
                           : AppColors.darkCard,
                       borderRadius: BorderRadius.only(
                         topLeft: const Radius.circular(12),

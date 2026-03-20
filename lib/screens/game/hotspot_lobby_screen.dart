@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/constants/app_constants.dart';
 import '../../models/game_models.dart';
 import '../../providers/chat_provider.dart';
 import '../../services/lan_service.dart';
@@ -27,7 +28,6 @@ class _HotspotLobbyScreenState extends ConsumerState<HotspotLobbyScreen> {
   String? _hostAddress;
   String _statusMessage = '';
   bool _isConnecting = false;
-  bool _isReady = false;
   StreamSubscription? _statusSub;
   StreamSubscription? _messageSub;
 
@@ -207,7 +207,7 @@ class _HotspotLobbyScreenState extends ConsumerState<HotspotLobbyScreen> {
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.primary.withOpacity(0.4),
+                        color: AppColors.primary.withValues(alpha: 0.4),
                         blurRadius: 20,
                         spreadRadius: 4,
                       )
@@ -218,7 +218,8 @@ class _HotspotLobbyScreenState extends ConsumerState<HotspotLobbyScreen> {
                     version: QrVersions.auto,
                     size: 180,
                     backgroundColor: Colors.white,
-                    foregroundColor: AppColors.darkBg,
+                    eyeStyle: const QrEyeStyle(eyeShape: QrEyeShape.square, color: AppColors.darkBg),
+                    dataModuleStyle: const QrDataModuleStyle(dataModuleShape: QrDataModuleShape.square, color: AppColors.darkBg),
                   ),
                 ).animate().scale(curve: Curves.elasticOut),
                 const SizedBox(height: 16),
@@ -370,7 +371,7 @@ class _HotspotLobbyScreenState extends ConsumerState<HotspotLobbyScreen> {
           decoration: BoxDecoration(
             color: AppColors.darkCard,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.accent.withOpacity(0.3)),
+            border: Border.all(color: AppColors.accent.withValues(alpha: 0.3)),
           ),
           child: Row(
             children: [
@@ -405,12 +406,12 @@ class _StatusCard extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(14),
         color: isError
-            ? AppColors.error.withOpacity(0.1)
-            : AppColors.primary.withOpacity(0.1),
+            ? AppColors.error.withValues(alpha: 0.1)
+            : AppColors.primary.withValues(alpha: 0.1),
         border: Border.all(
             color: isError
-                ? AppColors.error.withOpacity(0.4)
-                : AppColors.primary.withOpacity(0.4)),
+                ? AppColors.error.withValues(alpha: 0.4)
+                : AppColors.primary.withValues(alpha: 0.4)),
       ),
       child: Row(
         children: [
@@ -469,7 +470,7 @@ class _PlayerRow extends StatelessWidget {
         color: AppColors.darkCard,
         border: Border.all(
             color: isHost
-                ? AppColors.accent.withOpacity(0.4)
+                ? AppColors.accent.withValues(alpha: 0.4)
                 : AppColors.darkBorder),
       ),
       child: Row(
@@ -486,7 +487,7 @@ class _PlayerRow extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
-                color: AppColors.accent.withOpacity(0.15),
+                color: AppColors.accent.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text('HOST',
@@ -499,7 +500,7 @@ class _PlayerRow extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
-                color: AppColors.greenPlayer.withOpacity(0.15),
+                color: AppColors.greenPlayer.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text('READY',

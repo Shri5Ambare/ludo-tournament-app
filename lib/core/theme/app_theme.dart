@@ -88,11 +88,11 @@ class AppTheme {
         ),
         iconTheme: const IconThemeData(color: AppColors.textLight),
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: AppColors.darkCard,
         elevation: 8,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        shadowColor: AppColors.primary.withOpacity(0.3),
+        shadowColor: AppColors.primary.withValues(alpha: 0.3),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -121,7 +121,7 @@ class AppTheme {
         ),
         labelStyle: const TextStyle(color: AppColors.textMuted),
       ),
-      dialogTheme: DialogTheme(
+      dialogTheme: DialogThemeData(
         backgroundColor: AppColors.darkSurface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       ),
@@ -156,7 +156,7 @@ class AppTheme {
         ),
         iconTheme: const IconThemeData(color: AppColors.textDark),
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: AppColors.lightCard,
         elevation: 4,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -211,7 +211,7 @@ class AppTheme {
       bodyLarge: GoogleFonts.nunito(fontSize: 16, color: textColor),
       bodyMedium: GoogleFonts.nunito(fontSize: 14, color: textColor),
       bodySmall: GoogleFonts.nunito(
-        fontSize: 12, color: textColor.withOpacity(0.7)),
+        fontSize: 12, color: textColor.withValues(alpha: 0.7)),
       labelLarge: GoogleFonts.nunito(
         fontSize: 14, fontWeight: FontWeight.bold, color: textColor),
     );

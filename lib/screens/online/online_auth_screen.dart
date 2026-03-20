@@ -126,8 +126,8 @@ class _OnlineAuthScreenState extends ConsumerState<OnlineAuthScreen>
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),
-                  color: AppColors.error.withOpacity(0.1),
-                  border: Border.all(color: AppColors.error.withOpacity(0.4)),
+                  color: AppColors.error.withValues(alpha: 0.1),
+                  border: Border.all(color: AppColors.error.withValues(alpha: 0.4)),
                 ),
                 child: Text(_error!,
                     style: GoogleFonts.nunito(

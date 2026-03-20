@@ -86,7 +86,7 @@ class SettingsScreen extends ConsumerWidget {
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(10),
-                        color: sel ? AppColors.accent.withOpacity(0.15) : AppColors.darkBg,
+                        color: sel ? AppColors.accent.withValues(alpha: 0.15) : AppColors.darkBg,
                         border: Border.all(color: sel ? AppColors.accent : AppColors.darkBorder),
                       ),
                       child: Text('${secs}s',
@@ -161,7 +161,7 @@ class _ToggleTile extends StatelessWidget {
           subtitle: Text(subtitle, style: GoogleFonts.nunito(fontSize: 11, color: AppColors.textMuted)),
           value: value,
           onChanged: onChanged,
-          activeColor: AppColors.primary,
+          activeThumbColor: AppColors.primary,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         ),
       );

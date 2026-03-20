@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/constants/app_constants.dart';
 import '../../models/game_models.dart';
 import '../../providers/chat_provider.dart';
 import '../../services/supabase_service.dart';
@@ -185,11 +186,11 @@ class _OnlineLobbyScreenState extends ConsumerState<OnlineLobbyScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(18),
-                    color: AppColors.primary.withOpacity(0.15),
+                    color: AppColors.primary.withValues(alpha: 0.15),
                     border: Border.all(color: AppColors.primary, width: 2),
                     boxShadow: [
                       BoxShadow(
-                          color: AppColors.primary.withOpacity(0.3),
+                          color: AppColors.primary.withValues(alpha: 0.3),
                           blurRadius: 20),
                     ],
                   ),
@@ -296,7 +297,7 @@ class _OnlineLobbyScreenState extends ConsumerState<OnlineLobbyScreen> {
             }),
             style: OutlinedButton.styleFrom(
               foregroundColor: AppColors.primaryLight,
-              side: BorderSide(color: AppColors.primary.withOpacity(0.5)),
+              side: BorderSide(color: AppColors.primary.withValues(alpha: 0.5)),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
             ),
             icon: const Text('📨', style: TextStyle(fontSize: 18)),
@@ -407,9 +408,9 @@ class _OnlineLobbyScreenState extends ConsumerState<OnlineLobbyScreen> {
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(14),
-              color: AppColors.greenPlayer.withOpacity(0.1),
+              color: AppColors.greenPlayer.withValues(alpha: 0.1),
               border: Border.all(
-                  color: AppColors.greenPlayer.withOpacity(0.4)),
+                  color: AppColors.greenPlayer.withValues(alpha: 0.4)),
             ),
             child: Row(
               children: [
@@ -438,7 +439,7 @@ class _OnlineLobbyScreenState extends ConsumerState<OnlineLobbyScreen> {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
               color: AppColors.darkCard,
-              border: Border.all(color: AppColors.accent.withOpacity(0.3)),
+              border: Border.all(color: AppColors.accent.withValues(alpha: 0.3)),
             ),
             child: Row(
               children: [
@@ -495,7 +496,7 @@ class _PlayerTile extends StatelessWidget {
         color: AppColors.darkCard,
         border: Border.all(
             color: player.isHost
-                ? AppColors.accent.withOpacity(0.4)
+                ? AppColors.accent.withValues(alpha: 0.4)
                 : AppColors.darkBorder),
       ),
       child: Row(
@@ -528,9 +529,9 @@ class _Badge extends StatelessWidget {
   Widget build(BuildContext context) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.15),
+          color: color.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: color.withOpacity(0.4)),
+          border: Border.all(color: color.withValues(alpha: 0.4)),
         ),
         child: Text(label,
             style: GoogleFonts.nunito(
@@ -567,12 +568,12 @@ class _StatusBanner extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
           color: isError
-              ? AppColors.error.withOpacity(0.1)
-              : AppColors.primary.withOpacity(0.1),
+              ? AppColors.error.withValues(alpha: 0.1)
+              : AppColors.primary.withValues(alpha: 0.1),
           border: Border.all(
               color: isError
-                  ? AppColors.error.withOpacity(0.3)
-                  : AppColors.primary.withOpacity(0.3)),
+                  ? AppColors.error.withValues(alpha: 0.3)
+                  : AppColors.primary.withValues(alpha: 0.3)),
         ),
         child: Text(message,
             style: GoogleFonts.nunito(

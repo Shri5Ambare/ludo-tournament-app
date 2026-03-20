@@ -4,7 +4,7 @@
 // Works for both LAN/Hotspot and Online multiplayer.
 // Local pass-and-play mode also gets emoji reactions.
 
-import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/constants/board_paths.dart';

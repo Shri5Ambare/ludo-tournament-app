@@ -298,7 +298,7 @@ class SpectatorNotifier extends StateNotifier<SpectatorState> {
       _simTick++;
       // Simulate dice rolls and mock chat messages
       if (_simTick % 3 == 0 && state.chatMessages.length < 20) {
-        final msgs = _mockChatLines;
+        const msgs = _mockChatLines;
         final line = msgs[_simTick % msgs.length];
         _addChat(SpectatorChatMessage.text(
           username: line.$1,
@@ -337,7 +337,7 @@ class SpectatorNotifier extends StateNotifier<SpectatorState> {
 
   GameState _generateMockGameState() {
     // Generate a mid-game state so spectators see a live board
-    List<Token> _tokens(int playerIndex) => List.generate(
+    List<Token> buildTokens(int playerIndex) => List.generate(
           4,
           (i) => Token(
             id: playerIndex * 4 + i,
@@ -348,10 +348,10 @@ class SpectatorNotifier extends StateNotifier<SpectatorState> {
         );
 
     final players = [
-      Player(name: 'DragonSlayer99', index: 0, avatarEmoji: '🐉', tokens: _tokens(0)),
-      Player(name: 'LuckyDice',      index: 1, avatarEmoji: '🎲', tokens: _tokens(1)),
-      Player(name: 'NepaliGamer',    index: 2, avatarEmoji: '🏔️', tokens: _tokens(2)),
-      Player(name: 'QueenOfLudo',    index: 3, avatarEmoji: '👑', tokens: _tokens(3)),
+      Player(name: 'DragonSlayer99', index: 0, avatarEmoji: '🐉', tokens: buildTokens(0)),
+      Player(name: 'LuckyDice',      index: 1, avatarEmoji: '🎲', tokens: buildTokens(1)),
+      Player(name: 'NepaliGamer',    index: 2, avatarEmoji: '🏔️', tokens: buildTokens(2)),
+      Player(name: 'QueenOfLudo',    index: 3, avatarEmoji: '👑', tokens: buildTokens(3)),
     ];
 
     return GameState(

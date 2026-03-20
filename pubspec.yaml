@@ -68,16 +68,4 @@ flutter:
     - assets/images/
     - assets/audio/
 
-  fonts:
-    - family: Fredoka
-      fonts:
-        - asset: assets/fonts/Fredoka-Regular.ttf
-          weight: 400
-        - asset: assets/fonts/Fredoka-Bold.ttf
-          weight: 700
-    - family: Nunito
-      fonts:
-        - asset: assets/fonts/Nunito-Regular.ttf
-          weight: 400
-        - asset: assets/fonts/Nunito-Bold.ttf
-          weight: 700
+

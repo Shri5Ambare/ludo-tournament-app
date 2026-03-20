@@ -362,15 +362,15 @@ class _OnlineLobbyScreenState extends ConsumerState<OnlineLobbyScreen> {
                   fillColor: AppColors.darkCard,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(color: AppColors.darkBorder),
+                    borderSide: const BorderSide(color: AppColors.darkBorder),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(color: AppColors.darkBorder),
+                    borderSide: const BorderSide(color: AppColors.darkBorder),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(color: AppColors.primary, width: 2),
+                    borderSide: const BorderSide(color: AppColors.primary, width: 2),
                   ),
                 ),
               ),
@@ -465,7 +465,7 @@ class _OnlineLobbyScreenState extends ConsumerState<OnlineLobbyScreen> {
               }),
               style: OutlinedButton.styleFrom(
                 foregroundColor: Colors.white54,
-                side: BorderSide(color: Colors.white12),
+                side: const BorderSide(color: Colors.white12),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12)),
                 padding: const EdgeInsets.symmetric(vertical: 12),
@@ -509,11 +509,11 @@ class _PlayerTile extends StatelessWidget {
                 style: GoogleFonts.fredoka(fontSize: 15, color: Colors.white)),
           ),
           if (player.isHost)
-            _Badge('HOST', AppColors.accent)
+            const _Badge('HOST', AppColors.accent)
           else if (player.isReady)
-            _Badge('READY', AppColors.greenPlayer)
+            const _Badge('READY', AppColors.greenPlayer)
           else
-            _Badge('...', AppColors.textMuted),
+            const _Badge('...', AppColors.textMuted),
         ],
       ),
     );

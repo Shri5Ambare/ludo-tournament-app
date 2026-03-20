@@ -356,7 +356,7 @@ class _SpectatorScreenState extends ConsumerState<SpectatorScreen> {
   Widget _buildSpectatorStrip(SpectatorState state) {
     return Container(
       height: 46,
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: AppColors.darkSurface,
         border: Border(top: BorderSide(color: AppColors.darkBorder)),
       ),
@@ -634,11 +634,11 @@ class _SpectatorChatPanelState extends ConsumerState<_SpectatorChatPanel> {
           Container(
             padding:
                 const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               color: AppColors.darkCard,
               borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(18)),
-              border:
+                  BorderRadius.vertical(top: Radius.circular(18)),
+                  border:
                   Border(bottom: BorderSide(color: AppColors.darkBorder)),
             ),
             child: Row(
@@ -698,7 +698,7 @@ class _SpectatorChatPanelState extends ConsumerState<_SpectatorChatPanel> {
                           child: Container(
                             width: 38,
                             height: 38,
-                            decoration: BoxDecoration(
+                            decoration: const BoxDecoration(
                                 shape: BoxShape.circle,
                                 color: AppColors.darkBg),
                             child: Center(
@@ -713,7 +713,7 @@ class _SpectatorChatPanelState extends ConsumerState<_SpectatorChatPanel> {
           // Input bar
           Container(
             padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               color: AppColors.darkCard,
               border:
                   Border(top: BorderSide(color: AppColors.darkBorder)),

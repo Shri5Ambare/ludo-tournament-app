@@ -30,7 +30,7 @@ class SettingsScreen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          _SectionHeader(title: '🔊 Audio'),
+          const _SectionHeader(title: '🔊 Audio'),
           _ToggleTile(
             icon: Icons.volume_up_rounded,
             label: 'Sound Effects',
@@ -54,7 +54,7 @@ class SettingsScreen extends ConsumerWidget {
           ).animate(delay: 150.ms).fadeIn(),
 
           const SizedBox(height: 24),
-          _SectionHeader(title: '🎨 Appearance'),
+          const _SectionHeader(title: '🎨 Appearance'),
           _ToggleTile(
             icon: Icons.dark_mode_rounded,
             label: 'Dark Mode',
@@ -66,7 +66,7 @@ class SettingsScreen extends ConsumerWidget {
           const BoardThemeSelector().animate(delay: 250.ms).fadeIn(),
 
           const SizedBox(height: 24),
-          _SectionHeader(title: '⏱️ Turn Timer'),
+          const _SectionHeader(title: '⏱️ Turn Timer'),
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -101,7 +101,7 @@ class SettingsScreen extends ConsumerWidget {
           ).animate(delay: 300.ms).fadeIn(),
 
           const SizedBox(height: 24),
-          _SectionHeader(title: 'ℹ️ About'),
+          const _SectionHeader(title: 'ℹ️ About'),
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -109,14 +109,14 @@ class SettingsScreen extends ConsumerWidget {
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: AppColors.darkBorder),
             ),
-            child: Column(
+            child: const Column(
               children: [
                 _AboutRow(label: 'Version', value: '1.0.0'),
-                const Divider(color: AppColors.darkBorder, height: 20),
+                Divider(color: AppColors.darkBorder, height: 20),
                 _AboutRow(label: 'Developer', value: 'SSiT Nexus'),
-                const Divider(color: AppColors.darkBorder, height: 20),
+                Divider(color: AppColors.darkBorder, height: 20),
                 _AboutRow(label: 'Website', value: 'ssitnexus.com'),
-                const Divider(color: AppColors.darkBorder, height: 20),
+                Divider(color: AppColors.darkBorder, height: 20),
                 _AboutRow(label: 'Framework', value: 'Flutter 3.x'),
               ],
             ),

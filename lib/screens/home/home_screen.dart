@@ -54,9 +54,9 @@ class HomeScreen extends ConsumerWidget {
           ).animate().slideX(begin: -0.3).fadeIn(),
           Row(
             children: [
-              _iconBtn(context, Icons.person_rounded, () => context.push('/profile')),
+              _iconBtn(context, Icons.person_rounded, '/profile'),
               const SizedBox(width: 8),
-              _iconBtn(context, Icons.settings_rounded, () => context.push('/settings')),
+              _iconBtn(context, Icons.settings_rounded, '/settings'),
             ],
           ).animate().slideX(begin: 0.3).fadeIn(),
         ],
@@ -64,17 +64,22 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _iconBtn(BuildContext context, IconData icon, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 44, height: 44,
-        decoration: BoxDecoration(
-          color: AppColors.darkCard,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.darkBorder),
+  Widget _iconBtn(BuildContext context, IconData icon, String route) {
+    return Material(
+      color: AppColors.darkCard,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: () => context.push(route),
+        borderRadius: BorderRadius.circular(12),
+        splashColor: AppColors.primary.withValues(alpha: 0.2),
+        child: Container(
+          width: 44, height: 44,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.darkBorder),
+          ),
+          child: Icon(icon, color: Colors.white70, size: 22),
         ),
-        child: Icon(icon, color: Colors.white70, size: 22),
       ),
     );
   }
@@ -85,14 +90,14 @@ class HomeScreen extends ConsumerWidget {
           'vs Computer or pass & play', () => _goToLobby(context, 'quick')),
       _MenuItem('Local Multiplayer', '👥', AppColors.greenPlayer,
           '2–4 players, one device', () => _goToLobby(context, 'local')),
-      _MenuItem('🏆 Tournament', '🏆', AppColors.primary,
+      _MenuItem('Tournament', '🏆', AppColors.primary,
           '5–16 players bracket mode', () => context.push('/tournament/setup'),
           isFeature: true),
       _MenuItem('vs Computer', '🤖', AppColors.redPlayer,
           'Easy / Medium / Hard AI', () => _goToLobby(context, 'ai')),
       _MenuItem('Hotspot LAN', '📡', const Color(0xFF00838F),
           'Multiplayer over WiFi', () => _showHotspotDialog(context)),
-      _MenuItem('🌐 Online', '🌐', const Color(0xFF6A1B9A),
+      _MenuItem('Online', '🌐', const Color(0xFF6A1B9A),
           'Play worldwide', () => context.push('/online/auth')),
     ];
 
@@ -140,17 +145,22 @@ class HomeScreen extends ConsumerWidget {
   }
 
   Widget _footerBtn(BuildContext context, String emoji, String label, VoidCallback onTap) {
-    return GestureDetector(
+    return InkWell(
       onTap: onTap,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(emoji, style: const TextStyle(fontSize: 22)),
-          const SizedBox(height: 2),
-          Text(label,
-              style: GoogleFonts.nunito(
-                  fontSize: 10, color: AppColors.textMuted)),
-        ],
+      borderRadius: BorderRadius.circular(8),
+      splashColor: AppColors.primary.withValues(alpha: 0.15),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(emoji, style: const TextStyle(fontSize: 22)),
+            const SizedBox(height: 2),
+            Text(label,
+                style: GoogleFonts.nunito(
+                    fontSize: 10, color: AppColors.textMuted)),
+          ],
+        ),
       ),
     );
   }
@@ -177,49 +187,57 @@ class _MenuItem {
       {this.isFeature = false});
 
   Widget buildCard(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              color.withValues(alpha: isFeature ? 0.35 : 0.18),
-              color.withValues(alpha: isFeature ? 0.15 : 0.06),
-            ],
-          ),
-          border: Border.all(
-            color: color.withValues(alpha: isFeature ? 0.7 : 0.3),
-            width: isFeature ? 1.5 : 1,
-          ),
-          boxShadow: isFeature
-              ? [BoxShadow(color: color.withValues(alpha: 0.25), blurRadius: 16)]
-              : null,
-        ),
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(emoji, style: const TextStyle(fontSize: 36)),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title,
-                    style: GoogleFonts.fredoka(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white)),
-                Text(subtitle,
-                    style: GoogleFonts.nunito(
-                        fontSize: 11, color: Colors.white60),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        splashColor: color.withValues(alpha: 0.2),
+        highlightColor: color.withValues(alpha: 0.1),
+        child: Ink(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                color.withValues(alpha: isFeature ? 0.35 : 0.18),
+                color.withValues(alpha: isFeature ? 0.15 : 0.06),
               ],
             ),
-          ],
+            border: Border.all(
+              color: color.withValues(alpha: isFeature ? 0.7 : 0.3),
+              width: isFeature ? 1.5 : 1,
+            ),
+            boxShadow: isFeature
+                ? [BoxShadow(color: color.withValues(alpha: 0.25), blurRadius: 16)]
+                : null,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(emoji, style: const TextStyle(fontSize: 36)),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title,
+                        style: GoogleFonts.fredoka(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white)),
+                    Text(subtitle,
+                        style: GoogleFonts.nunito(
+                            fontSize: 11, color: Colors.white60),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis),
+                  ],
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

@@ -1,4 +1,3 @@
-// lib/screens/game/game_lobby_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,6 +7,7 @@ import '../../core/constants/app_constants.dart';
 import '../../core/constants/board_paths.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/game_models.dart';
+import '../../providers/settings_provider.dart';
 
 class GameLobbyScreen extends ConsumerStatefulWidget {
   final Map<String, dynamic> config;
@@ -23,6 +23,7 @@ class _GameLobbyScreenState extends ConsumerState<GameLobbyScreen> {
   String selectedDifficulty = AIDifficulty.medium;
   String selectedGameMode = GameMode.classic;
   int turnTimer = AppConstants.defaultTurnSeconds;
+  bool _timerLoadedFromSettings = false;
 
   final List<TextEditingController> nameControllers =
       List.generate(4, (_) => TextEditingController());
@@ -53,12 +54,25 @@ class _GameLobbyScreenState extends ConsumerState<GameLobbyScreen> {
 
   @override
   void dispose() {
-    for (final c in nameControllers) c.dispose();
+    for (final c in nameControllers) {
+      c.dispose();
+    }
+
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    // Load timer from settings once on first build
+    if (!_timerLoadedFromSettings) {
+      final savedTimer = ref.read(settingsProvider).turnTimerSeconds;
+      turnTimer = savedTimer;
+      _timerLoadedFromSettings = true;
+    }
+
+    final hasAnyBot = List.generate(playerCount, (i) => playerTypes[i])
+        .any((t) => t == PlayerType.ai);
+
     return Scaffold(
       backgroundColor: AppColors.darkBg,
       appBar: AppBar(
@@ -87,7 +101,14 @@ class _GameLobbyScreenState extends ConsumerState<GameLobbyScreen> {
             _sectionTitle('Turn Timer'),
             const SizedBox(height: 12),
             _timerSelector(),
-            const SizedBox(height: 32),
+            const SizedBox(height: 20),
+            if (hasAnyBot) ...[
+              _sectionTitle('AI Difficulty'),
+              const SizedBox(height: 12),
+              _difficultySelector(),
+              const SizedBox(height: 20),
+            ],
+            const SizedBox(height: 12),
             _startButton(),
           ],
         ),
@@ -172,7 +193,7 @@ class _GameLobbyScreenState extends ConsumerState<GameLobbyScreen> {
                   style: GoogleFonts.nunito(color: Colors.white),
                   decoration: InputDecoration(
                     hintText: '$colorName Player',
-                    hintStyle: TextStyle(color: Colors.white38),
+                    hintStyle: const TextStyle(color: Colors.white38),
                     border: InputBorder.none,
                     isDense: true,
                     contentPadding: EdgeInsets.zero,
@@ -272,6 +293,53 @@ class _GameLobbyScreenState extends ConsumerState<GameLobbyScreen> {
     );
   }
 
+  Widget _difficultySelector() {
+    final levels = [
+      (AIDifficulty.easy, '😊 Easy', 'Bot makes random moves'),
+      (AIDifficulty.medium, '🧠 Medium', 'Smart but beatable'),
+      (AIDifficulty.hard, '🔥 Hard', 'Aggressive & strategic'),
+    ];
+    return Column(
+      children: levels.map((d) {
+        final sel = selectedDifficulty == d.$1;
+        return GestureDetector(
+          onTap: () => setState(() => selectedDifficulty = d.$1),
+          child: AnimatedContainer(
+            duration: 200.ms,
+            margin: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              color: sel ? AppColors.accent.withValues(alpha: 0.15) : AppColors.darkCard,
+              border: Border.all(
+                color: sel ? AppColors.accent : AppColors.darkBorder,
+                width: sel ? 1.5 : 1,
+              ),
+            ),
+            child: Row(
+              children: [
+                Text(d.$2,
+                    style: GoogleFonts.fredoka(
+                        fontSize: 14,
+                        color: Colors.white,
+                        fontWeight: sel ? FontWeight.bold : FontWeight.normal)),
+                const Spacer(),
+                Text(d.$3,
+                    style: GoogleFonts.nunito(
+                        fontSize: 11, color: Colors.white54)),
+                if (sel) ...[
+                  const SizedBox(width: 8),
+                  const Icon(Icons.check_circle_rounded,
+                      color: AppColors.accent, size: 16),
+                ],
+              ],
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
   Widget _startButton() {
     return SizedBox(
       width: double.infinity,
@@ -289,13 +357,23 @@ class _GameLobbyScreenState extends ConsumerState<GameLobbyScreen> {
   }
 
   void _startGame() {
-    final configs = List.generate(playerCount, (i) => {
-      'name': nameControllers[i].text.trim().isEmpty
+    // Deduplicate names
+    final usedNames = <String>{};
+    final configs = List.generate(playerCount, (i) {
+      String name = nameControllers[i].text.trim().isEmpty
           ? BoardPaths.playerColorNames[i]
-          : nameControllers[i].text.trim(),
-      'type': playerTypes[i],
-      'difficulty': selectedDifficulty,
-      'avatar': ['🔴', '🟢', '🟡', '🔵'][i],
+          : nameControllers[i].text.trim();
+      // Append suffix if duplicate
+      if (usedNames.contains(name)) {
+        name = '$name ${i + 1}';
+      }
+      usedNames.add(name);
+      return {
+        'name': name,
+        'type': playerTypes[i],
+        'difficulty': selectedDifficulty,
+        'avatar': ['🔴', '🟢', '🟡', '🔵'][i],
+      };
     });
 
     context.push('/game', extra: {
@@ -305,3 +383,4 @@ class _GameLobbyScreenState extends ConsumerState<GameLobbyScreen> {
     });
   }
 }
+

@@ -189,9 +189,9 @@ class _GameChatPanelState extends ConsumerState<GameChatPanel>
   Widget _buildHeader() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: AppColors.darkCard,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         border: Border(bottom: BorderSide(color: AppColors.darkBorder)),
       ),
       child: Row(
@@ -250,7 +250,7 @@ class _GameChatPanelState extends ConsumerState<GameChatPanel>
               onTap: () => _sendEmoji(emoji),
               child: Container(
                 width: 42, height: 42,
-                decoration: BoxDecoration(shape: BoxShape.circle, color: AppColors.darkBg),
+                decoration: const BoxDecoration(shape: BoxShape.circle, color: AppColors.darkBg),
                 child: Center(child: Text(emoji, style: const TextStyle(fontSize: 22))),
               ),
             )).toList(),
@@ -263,7 +263,7 @@ class _GameChatPanelState extends ConsumerState<GameChatPanel>
   Widget _buildInputBar() {
     return Container(
       padding: const EdgeInsets.fromLTRB(8, 6, 8, 10),
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: AppColors.darkCard,
         border: Border(top: BorderSide(color: AppColors.darkBorder)),
       ),

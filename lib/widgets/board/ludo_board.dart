@@ -276,7 +276,7 @@ class BoardPainter extends CustomPainter {
     final r = cellSize * 1.8;
 
     // Rainbow center
-    final gradient = SweepGradient(
+    const gradient = SweepGradient(
       colors: [
         AppColors.redPlayer,
         AppColors.greenPlayer,

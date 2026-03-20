@@ -38,7 +38,9 @@ class _TournamentSetupScreenState extends ConsumerState<TournamentSetupScreen> {
   @override
   void dispose() {
     _nameController.dispose();
-    for (final c in _playerControllers) c.dispose();
+    for (final c in _playerControllers) {
+      c.dispose();
+    }
     super.dispose();
   }
 
@@ -89,20 +91,20 @@ class _TournamentSetupScreenState extends ConsumerState<TournamentSetupScreen> {
               style: GoogleFonts.nunito(color: Colors.white),
               decoration: InputDecoration(
                 hintText: 'Enter tournament name...',
-                hintStyle: TextStyle(color: Colors.white38),
+                hintStyle: const TextStyle(color: Colors.white38),
                 filled: true,
                 fillColor: AppColors.darkCard,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: AppColors.darkBorder),
+                  borderSide: const BorderSide(color: AppColors.darkBorder),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: AppColors.darkBorder),
+                  borderSide: const BorderSide(color: AppColors.darkBorder),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: AppColors.primary, width: 2),
+                  borderSide: const BorderSide(color: AppColors.primary, width: 2),
                 ),
               ),
             ),
@@ -249,7 +251,7 @@ class _TournamentSetupScreenState extends ConsumerState<TournamentSetupScreen> {
                     style: GoogleFonts.fredoka(
                         fontSize: 14, color: AppColors.accent),
                   ),
-                  TextSpan(
+                  const TextSpan(
                     text: 'of ${AppConstants.playersPerGroup} players. ',
                   ),
                   if (playerCount % AppConstants.playersPerGroup != 0)
@@ -301,7 +303,7 @@ class _TournamentSetupScreenState extends ConsumerState<TournamentSetupScreen> {
                   style: GoogleFonts.nunito(color: Colors.white, fontSize: 14),
                   decoration: InputDecoration(
                     hintText: 'Player ${i + 1}',
-                    hintStyle: TextStyle(color: Colors.white38, fontSize: 14),
+                    hintStyle: const TextStyle(color: Colors.white38, fontSize: 14),
                     border: InputBorder.none,
                     isDense: true,
                     contentPadding: EdgeInsets.zero,
@@ -355,7 +357,7 @@ class _TournamentSetupScreenState extends ConsumerState<TournamentSetupScreen> {
                         fontSize: 12, color: Colors.white54)),
                 if (sel) ...[
                   const SizedBox(width: 8),
-                  Icon(Icons.check_circle, color: AppColors.primary, size: 18),
+                  const Icon(Icons.check_circle, color: AppColors.primary, size: 18),
                 ],
               ],
             ),

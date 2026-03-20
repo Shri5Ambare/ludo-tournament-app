@@ -69,8 +69,8 @@ class _DiceWidgetState extends State<DiceWidget>
         },
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
-          width: 72,
-          height: 72,
+          width: 56,
+          height: 56,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
             color: widget.canRoll
@@ -95,7 +95,7 @@ class _DiceWidgetState extends State<DiceWidget>
                 ? Icon(
                     Icons.casino_rounded,
                     color: widget.canRoll ? widget.playerColor : Colors.white38,
-                    size: 36,
+                    size: 28,
                   )
                 : _DiceFace(value: widget.value, color: widget.playerColor),
           ),

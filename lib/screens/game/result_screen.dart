@@ -194,26 +194,38 @@ class _ResultScreenState extends State<ResultScreen> {
   Widget _buildWinnerPodium(String name, Color color) {
     return Column(
       children: [
-        Container(
-          width: 90,
-          height: 90,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: color.withValues(alpha: 0.15),
-            border: Border.all(color: AppColors.accent, width: 3),
-            boxShadow: [
-              BoxShadow(
-                  color: AppColors.accent.withValues(alpha: 0.5),
-                  blurRadius: 28,
-                  spreadRadius: 4),
-            ],
-          ),
-          child: const Center(
-              child: Text('🏆', style: TextStyle(fontSize: 44))),
-        )
-            .animate()
-            .scale(curve: Curves.elasticOut, delay: 200.ms),
-        const SizedBox(height: 10),
+        Stack(
+          alignment: Alignment.center,
+          children: [
+            Container(
+              width: 100,
+              height: 100,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: color.withValues(alpha: 0.2),
+                border: Border.all(color: color, width: 4),
+                boxShadow: [
+                  BoxShadow(
+                      color: AppColors.accent.withValues(alpha: 0.4),
+                      blurRadius: 32,
+                      spreadRadius: 6),
+                ],
+              ),
+            ),
+            Container(
+              width: 78,
+              height: 78,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: color.withValues(alpha: 0.15),
+                border: Border.all(color: AppColors.accent, width: 2),
+              ),
+              child: const Center(
+                  child: Text('🏆', style: TextStyle(fontSize: 40))),
+            ),
+          ],
+        ).animate().scale(curve: Curves.elasticOut, delay: 200.ms),
+        const SizedBox(height: 12),
         Text(name,
             style: GoogleFonts.fredoka(
                 fontSize: 26,
@@ -293,7 +305,15 @@ class _ResultScreenState extends State<ResultScreen> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: () => context.go('/home'),
+                    onPressed: () {
+                      // Replay: go back to lobby with last config stored in results
+                      final extra = widget.results['lastLobbyConfig'];
+                      if (extra != null) {
+                        context.go('/lobby', extra: extra as Map<String, dynamic>);
+                      } else {
+                        context.go('/lobby', extra: {'mode': 'quick'});
+                      }
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       padding: const EdgeInsets.symmetric(vertical: 14),

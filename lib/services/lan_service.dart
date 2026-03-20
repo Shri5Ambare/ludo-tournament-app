@@ -217,7 +217,9 @@ class LanService {
     _connectedClients.clear();
     await _server?.close(force: true);
     _server = null;
-    _connectionController.add('DISCONNECTED');
+    if (!_connectionController.isClosed) {
+      _connectionController.add('DISCONNECTED');
+    }
   }
 
   void dispose() {

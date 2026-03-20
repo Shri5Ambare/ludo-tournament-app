@@ -69,7 +69,7 @@ class ProfileScreen extends ConsumerWidget {
                 .animate(delay: 300.ms).fadeIn(),
             const SizedBox(height: 8),
             // XP Bar
-            _XpBar(current: 350, total: 600),
+            const _XpBar(current: 350, total: 600),
             const SizedBox(height: 32),
             // Stats grid
             GridView.builder(

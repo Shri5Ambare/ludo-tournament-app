@@ -44,6 +44,17 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   bool get _isTournamentGame =>
       _tournamentGroupIndex != null || _isFinals;
 
+  // Whether this game has any human-to-human multiplayer (chat makes sense)
+  bool get _isMultiplayer {
+    final configs = (widget.config['playerConfigs'] ?? widget.config['players']) as List?;
+    if (configs == null) return false;
+    final humanCount = configs.where((c) {
+      final t = (c as Map)['type'];
+      return t == PlayerType.human || t == 'human';
+    }).length;
+    return humanCount > 1;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -122,6 +133,8 @@ class _GameScreenState extends ConsumerState<GameScreen> {
           'isTournamentGame': _isTournamentGame,
           'tournamentGroupIndex': _tournamentGroupIndex,
           'isFinals': _isFinals,
+          // Pass config so Play Again button works
+          'lastLobbyConfig': {'mode': widget.config['gameMode'] ?? 'quick'},
         });
       });
     }
@@ -136,14 +149,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
               children: [
                 _buildTopBar(context, gameState),
                 _buildPlayerStrip(gameState),
-                const SizedBox(height: 4),
-                // Event log
-                if (gameState.eventLog.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    child: EventLogWidget(events: gameState.eventLog),
-                  ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 8),
                 // Board
                 Expanded(
                   child: Padding(
@@ -210,8 +216,8 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             ),
           const Spacer(),
           // Chat FAB (only in multiplayer modes)
-          const ChatFab(),
-          const SizedBox(width: 8),
+          if (_isMultiplayer) const ChatFab(),
+          if (_isMultiplayer) const SizedBox(width: 8),
           // Turn timer
           _TimerRing(
             seconds: gameState.remainingTurnSeconds,
@@ -321,51 +327,62 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         gameState.phase == GamePhase.rolling;
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
       decoration: BoxDecoration(
         color: AppColors.darkBg,
         border: Border(
             top: BorderSide(color: AppColors.darkBorder.withValues(alpha: 0.5))),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Current player info
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  currentPlayer.isAI
-                      ? '🤖 ${currentPlayer.name} thinking...'
-                      : gameState.phase == GamePhase.moving
-                          ? '👆 Tap a token to move'
-                          : '🎲 ${currentPlayer.name}\'s turn',
-                  style: GoogleFonts.fredoka(
-                    fontSize: 14,
-                    color: currentPlayer.color,
-                  ),
-                ),
-                if (gameState.diceValue > 0 && gameState.phase == GamePhase.moving)
-                  Text(
-                    'Rolled a ${gameState.diceValue}${gameState.movableTokenIds.length > 1 ? " — choose token" : ""}',
-                    style: GoogleFonts.nunito(
-                        fontSize: 11, color: AppColors.textMuted),
-                  ),
-              ],
+          if (gameState.eventLog.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: EventLogWidget(events: gameState.eventLog),
             ),
-          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // Current player info
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      currentPlayer.isAI
+                          ? '🤖 ${currentPlayer.name} thinking...'
+                          : gameState.phase == GamePhase.moving
+                              ? '👆 Tap a token to move'
+                              : '🎲 ${currentPlayer.name}\'s turn',
+                      style: GoogleFonts.fredoka(
+                        fontSize: 14,
+                        color: currentPlayer.color,
+                      ),
+                    ),
+                    if (gameState.diceValue > 0 && gameState.phase == GamePhase.moving)
+                      Text(
+                        'Rolled a ${gameState.diceValue}${gameState.movableTokenIds.length > 1 ? " — choose token" : ""}',
+                        style: GoogleFonts.nunito(
+                            fontSize: 11, color: AppColors.textMuted),
+                      ),
+                  ],
+                ),
+              ),
 
-          // Dice
-          DiceWidget(
-            value: gameState.diceValue,
-            canRoll: canRoll,
-            onRoll: () {
-              HapticFeedback.mediumImpact();
-              ref.read(gameProvider.notifier).rollDice();
-            },
-            playerColor: currentPlayer.color,
+              // Dice
+              DiceWidget(
+                value: gameState.diceValue,
+                canRoll: canRoll,
+                onRoll: () {
+                  HapticFeedback.mediumImpact();
+                  ref.read(gameProvider.notifier).rollDice();
+                },
+                playerColor: currentPlayer.color,
+              ),
+            ],
           ),
         ],
       ),
@@ -417,39 +434,93 @@ class _GameScreenState extends ConsumerState<GameScreen> {
 
 // ── Timer ring widget ──────────────────────────────────────────────────────
 
-class _TimerRing extends StatelessWidget {
+class _TimerRing extends StatefulWidget {
   final int seconds;
   final int total;
   const _TimerRing({required this.seconds, required this.total});
 
   @override
+  State<_TimerRing> createState() => _TimerRingState();
+}
+
+class _TimerRingState extends State<_TimerRing>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _pulseController;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
+    _updatePulse();
+  }
+
+  @override
+  void didUpdateWidget(_TimerRing old) {
+    super.didUpdateWidget(old);
+    _updatePulse();
+  }
+
+  void _updatePulse() {
+    if (widget.seconds <= 5 && widget.seconds > 0) {
+      if (!_pulseController.isAnimating) {
+        _pulseController.repeat(reverse: true);
+      }
+    } else {
+      _pulseController.stop();
+      _pulseController.value = 0;
+    }
+  }
+
+  @override
+  void dispose() {
+    _pulseController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final frac = (total > 0 ? seconds / total : 1.0).clamp(0.0, 1.0);
+    final frac =
+        (widget.total > 0 ? widget.seconds / widget.total : 1.0).clamp(0.0, 1.0);
     final color = frac > 0.5
         ? AppColors.greenPlayer
         : frac > 0.25
             ? AppColors.yellowPlayer
             : AppColors.redPlayer;
+    final isUrgent = widget.seconds <= 5 && widget.seconds > 0;
 
-    return SizedBox(
-      width: 44,
-      height: 44,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          CircularProgressIndicator(
-            value: frac,
-            strokeWidth: 3,
-            backgroundColor: AppColors.darkCard,
-            valueColor: AlwaysStoppedAnimation(color),
+    return AnimatedBuilder(
+      animation: _pulseController,
+      builder: (context, child) {
+        final scale = isUrgent
+            ? 1.0 + (_pulseController.value * 0.12)
+            : 1.0;
+        return Transform.scale(
+          scale: scale,
+          child: SizedBox(
+            width: 44,
+            height: 44,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                CircularProgressIndicator(
+                  value: frac,
+                  strokeWidth: 3,
+                  backgroundColor: AppColors.darkCard,
+                  valueColor: AlwaysStoppedAnimation(color),
+                ),
+                Text('${widget.seconds}',
+                    style: GoogleFonts.fredoka(
+                        fontSize: 13,
+                        color: color,
+                        fontWeight: FontWeight.bold)),
+              ],
+            ),
           ),
-          Text('$seconds',
-              style: GoogleFonts.fredoka(
-                  fontSize: 13,
-                  color: color,
-                  fontWeight: FontWeight.bold)),
-        ],
-      ),
+        );
+      },
     );
   }
 }

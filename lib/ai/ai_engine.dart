@@ -106,7 +106,9 @@ class AIEngine {
 
     // Move to safe zone: +25
     if (newPos <= 51 &&
-        BoardPaths.isSafePosition(player.index, newPos)) score += 25;
+        BoardPaths.isSafePosition(player.index, newPos)) {
+      score += 25;
+    }
 
     // Cut opponent: +50
     if (_canCut(player, tokenId, allPlayers, diceValue)) score += 50;

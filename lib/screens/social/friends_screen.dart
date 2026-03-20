@@ -830,7 +830,7 @@ class _Badge extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: 18, height: 18,
-      decoration: BoxDecoration(shape: BoxShape.circle, color: AppColors.error),
+      decoration: const BoxDecoration(shape: BoxShape.circle, color: AppColors.error),
       child: Center(
         child: Text('$count', style: const TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold)),
       ),

@@ -311,7 +311,7 @@ class _HotspotLobbyScreenState extends ConsumerState<HotspotLobbyScreen> {
                 : _statusMessage,
             isError: _statusMessage.startsWith('❌')),
         const SizedBox(height: 24),
-        _SectionTitle(title: 'Host IP Address'),
+        const _SectionTitle(title: 'Host IP Address'),
         const SizedBox(height: 10),
         Row(
           children: [
@@ -328,16 +328,16 @@ class _HotspotLobbyScreenState extends ConsumerState<HotspotLobbyScreen> {
                   fillColor: AppColors.darkCard,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: AppColors.darkBorder),
+                    borderSide: const BorderSide(color: AppColors.darkBorder),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: AppColors.darkBorder),
+                    borderSide: const BorderSide(color: AppColors.darkBorder),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide:
-                        BorderSide(color: AppColors.primary, width: 2),
+                        const BorderSide(color: AppColors.primary, width: 2),
                   ),
                 ),
               ),

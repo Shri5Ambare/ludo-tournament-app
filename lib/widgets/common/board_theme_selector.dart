@@ -15,7 +15,7 @@ class BoardThemeSelector extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(settingsProvider);
-    final themeIds = BoardThemes.all;
+    const themeIds = BoardThemes.all;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

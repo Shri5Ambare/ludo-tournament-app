@@ -396,8 +396,8 @@ class LudoBoardPainter extends CustomPainter {
   void _drawCenter(Canvas canvas, double cw, double ch, Size size) {
     final cx = size.width / 2;
     final cy = size.height / 2;
-    final halfW = cw * 3;
-    final halfH = ch * 3;
+    final halfW = cw * 1.5;
+    final halfH = ch * 1.5;
     final colors = _playerColors;
 
     // Center background
@@ -453,8 +453,11 @@ class LudoBoardPainter extends CustomPainter {
       final angle = (i * 4 * pi) / 5 - pi / 2;
       final x = center.dx + radius * _cos(angle);
       final y = center.dy + radius * _sin(angle);
-      if (i == 0) path.moveTo(x, y);
-      else path.lineTo(x, y);
+      if (i == 0) {
+        path.moveTo(x, y);
+      } else {
+        path.lineTo(x, y);
+      }
     }
     path.close();
     canvas.drawPath(path, paint);

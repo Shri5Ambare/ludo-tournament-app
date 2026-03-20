@@ -129,7 +129,7 @@ class GameNotifier extends StateNotifier<GameState?> {
 
     _aiTimer?.cancel();
     _aiTimer = Timer(
-      Duration(milliseconds: AppConstants.aiThinkDelayMs),
+      const Duration(milliseconds: AppConstants.aiThinkDelayMs),
       _executeAITurn,
     );
   }
@@ -150,7 +150,7 @@ class GameNotifier extends StateNotifier<GameState?> {
       // AI picks token
       _aiTimer?.cancel();
       _aiTimer = Timer(
-        Duration(milliseconds: AppConstants.aiMoveDelayMs),
+        const Duration(milliseconds: AppConstants.aiMoveDelayMs),
         () {
           final s = state;
           if (s == null) return;

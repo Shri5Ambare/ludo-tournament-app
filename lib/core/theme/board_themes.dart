@@ -39,8 +39,9 @@ class BoardThemes {
   static const String royal    = 'royal';
   static const String forest   = 'forest';
   static const String diwali   = 'diwali';
+  static const String playful  = 'playful';
 
-  static const List<String> all = [classic, neon, royal, forest, diwali];
+  static const List<String> all = [classic, playful, neon, royal, forest, diwali];
 
   static const Map<String, BoardThemeData> themes = {
     classic: BoardThemeData(
@@ -68,9 +69,9 @@ class BoardThemes {
       yardOverlay: Color(0x1800FFCC),
       playerColors: [
         Color(0xFFFF3366), // neon red
-        Color(0xFF00FF99), // neon green
-        Color(0xFFFFDD00), // neon yellow
         Color(0xFF3399FF), // neon blue
+        Color(0xFFFFDD00), // neon yellow
+        Color(0xFF00FF99), // neon green
       ],
       glowEffect: true,
     ),
@@ -87,9 +88,9 @@ class BoardThemes {
       yardOverlay: Color(0x18FFD700),
       playerColors: [
         Color(0xFFCC2200),  // deep crimson
-        Color(0xFF006622),  // deep green
-        Color(0xFFBB8800),  // gold-yellow
         Color(0xFF003399),  // royal blue
+        Color(0xFFBB8800),  // gold-yellow
+        Color(0xFF006622),  // deep green
       ],
       glowEffect: false,
     ),
@@ -106,9 +107,9 @@ class BoardThemes {
       yardOverlay: Color(0x1844AA44),
       playerColors: [
         Color(0xFFCC3300),  // red-orange
-        Color(0xFF33AA00),  // bright green
-        Color(0xFFCCAA00),  // amber
         Color(0xFF0055AA),  // deep blue
+        Color(0xFFCCAA00),  // amber
+        Color(0xFF33AA00),  // bright green
       ],
       glowEffect: false,
     ),
@@ -125,9 +126,28 @@ class BoardThemes {
       yardOverlay: Color(0x18FF8800),
       playerColors: [
         Color(0xFFFF3300),  // deep red
-        Color(0xFF00BB44),  // green
+        Color(0xFF8833FF),  // purple (swapped blue-equivalent)
         Color(0xFFFFAA00),  // saffron/orange
-        Color(0xFF8833FF),  // purple
+        Color(0xFF00BB44),  // green
+      ],
+      glowEffect: true,
+    ),
+    
+    playful: BoardThemeData(
+      id: playful,
+      label: 'Playful',
+      emoji: '🎈',
+      background: Color(0xFFF9F9FB),
+      cellColor: Colors.white,
+      safeCellColor: Color(0xFFE8F5E9),
+      gridLine: Color(0xFFD1D9E6),
+      centerBg: Colors.white,
+      yardOverlay: Color(0x33FFFFFF),
+      playerColors: [
+        Color(0xFFFF6B6B), // pastel red
+        Color(0xFF4D96FF), // pastel blue
+        Color(0xFFFDCB6E), // pastel yellow
+        Color(0xFF6BCB77), // pastel green
       ],
       glowEffect: true,
     ),

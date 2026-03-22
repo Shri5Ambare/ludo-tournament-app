@@ -51,22 +51,32 @@ class _ResultScreenState extends State<ResultScreen> {
         BoardPaths.playerColors[winner?['color'] as int? ?? 0];
 
     return Scaffold(
-      backgroundColor: AppColors.darkBg,
+      backgroundColor: AppColors.lightBg,
       body: Stack(
         children: [
+          // Decorative background elements
+          Positioned(
+            top: -100, right: -50,
+            child: CircleAvatar(radius: 150, backgroundColor: winnerColor.withValues(alpha: 0.05)),
+          ),
+          Positioned(
+            bottom: -50, left: -50,
+            child: CircleAvatar(radius: 100, backgroundColor: AppColors.primary.withValues(alpha: 0.05)),
+          ),
+
           // Confetti burst at top
           Align(
             alignment: Alignment.topCenter,
             child: ConfettiWidget(
               confettiController: _confetti,
               blastDirectionality: BlastDirectionality.explosive,
-              numberOfParticles: 40,
-              gravity: 0.2,
-              emissionFrequency: 0.05,
+              numberOfParticles: 50,
+              gravity: 0.1,
+              emissionFrequency: 0.04,
               colors: const [
                 AppColors.redPlayer, AppColors.greenPlayer,
                 AppColors.yellowPlayer, AppColors.bluePlayer,
-                AppColors.primary, AppColors.accent,
+                AppColors.primary, Color(0xFFFFD700),
               ],
             ),
           ),
@@ -74,41 +84,64 @@ class _ResultScreenState extends State<ResultScreen> {
           SafeArea(
             child: Column(
               children: [
-                const SizedBox(height: 16),
+                const SizedBox(height: 32),
 
                 // Header
                 if (_isFinals)
-                  Text('🏆 Tournament Champion!',
+                  Text('TOURNAMENT CHAMPION!',
                       style: GoogleFonts.fredoka(
-                          fontSize: 26,
+                          fontSize: 28,
                           color: AppColors.accent,
-                          fontWeight: FontWeight.bold))
-                      .animate().scale(curve: Curves.elasticOut)
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 2))
+                      .animate().scale(curve: Curves.elasticOut, duration: 800.ms)
                 else if (_isTournamentGame)
                   Text(
-                    'Group ${String.fromCharCode(65 + (_groupIndex ?? 0))} Result',
+                    'GROUP ${String.fromCharCode(64 + (_groupIndex ?? 1))} RESULT',
                     style: GoogleFonts.fredoka(
-                        fontSize: 24, color: Colors.white),
+                        fontSize: 24, color: AppColors.textDark, fontWeight: FontWeight.bold, letterSpacing: 1.5),
                   ).animate().fadeIn()
                 else
-                  Text('Game Over! 🎉',
+                  Text('GAME OVER!',
                       style: GoogleFonts.fredoka(
-                          fontSize: 32,
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold))
-                      .animate().scale(curve: Curves.elasticOut),
+                          fontSize: 36,
+                          color: AppColors.textDark,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 2))
+                      .animate().scale(curve: Curves.elasticOut, duration: 800.ms),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 32),
 
                 // Winner podium
                 if (winner != null) _buildWinnerPodium(winnerName, winnerColor),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 32),
+
+                // Rankings Title
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('FINAL RANKINGS',
+                          style: GoogleFonts.fredoka(
+                              fontSize: 14, color: AppColors.textDark.withValues(alpha: 0.4), fontWeight: FontWeight.bold, letterSpacing: 1.5)),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(20)),
+                        child: Text('${_sorted.length} PLAYERS',
+                            style: GoogleFonts.fredoka(fontSize: 10, color: AppColors.primary, fontWeight: FontWeight.bold)),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
 
                 // Full rankings list
                 Expanded(
                   child: ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    physics: const BouncingScrollPhysics(),
                     itemCount: _sorted.length,
                     itemBuilder: (context, i) {
                       final p = _sorted[i];
@@ -118,63 +151,68 @@ class _ResultScreenState extends State<ResultScreen> {
                           BoardPaths.playerColors[p['color'] as int? ?? 0];
 
                       return Container(
-                        margin: const EdgeInsets.only(bottom: 10),
+                        margin: const EdgeInsets.only(bottom: 12),
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 13),
+                            horizontal: 20, vertical: 16),
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(14),
-                          color: rank == 1
-                              ? AppColors.accent.withValues(alpha: 0.1)
-                              : AppColors.darkCard,
-                          border: Border.all(
-                            color: rank == 1
-                                ? AppColors.accent.withValues(alpha: 0.5)
-                                : AppColors.darkBorder,
-                            width: rank == 1 ? 1.5 : 1,
-                          ),
+                          borderRadius: BorderRadius.circular(24),
+                          color: Colors.white,
+                          boxShadow: [
+                            BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 4)),
+                          ],
+                          border: rank == 1
+                              ? Border.all(color: AppColors.primary.withValues(alpha: 0.2), width: 1.5)
+                              : null,
                         ),
                         child: Row(
                           children: [
-                            Text(_rankEmoji(rank),
-                                style: const TextStyle(fontSize: 26)),
-                            const SizedBox(width: 12),
-                            Container(
-                              width: 12, height: 12,
+                             Container(
+                              width: 36, height: 36,
                               decoration: BoxDecoration(
-                                  shape: BoxShape.circle, color: color),
+                                shape: BoxShape.circle,
+                                color: color.withValues(alpha: 0.1),
+                              ),
+                              child: Center(
+                                child: Text(_rankEmoji(rank),
+                                    style: const TextStyle(fontSize: 20)),
+                              ),
                             ),
-                            const SizedBox(width: 10),
+                            const SizedBox(width: 16),
                             Expanded(
                               child: Text(name,
                                   style: GoogleFonts.fredoka(
-                                      fontSize: 18, color: Colors.white)),
+                                      fontSize: 18, 
+                                      color: rank == 1 ? AppColors.textDark : AppColors.textDark.withValues(alpha: 0.7),
+                                      fontWeight: rank == 1 ? FontWeight.bold : FontWeight.w500)),
                             ),
                             if (rank == 1 && _isTournamentGame)
                               Container(
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 10, vertical: 4),
                                 decoration: BoxDecoration(
-                                  color: AppColors.accent.withValues(alpha: 0.15),
-                                  borderRadius: BorderRadius.circular(10),
+                                  color: AppColors.greenPlayer.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
-                                child: Text('Advances →',
-                                    style: GoogleFonts.nunito(
-                                        fontSize: 11,
-                                        color: AppColors.accent,
-                                        fontWeight: FontWeight.bold)),
+                                child: Text('ADVANCES →',
+                                    style: GoogleFonts.fredoka(
+                                        fontSize: 10,
+                                        color: AppColors.greenPlayer,
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: 1)),
                               )
                             else
                               Text('#$rank',
                                   style: GoogleFonts.fredoka(
                                       fontSize: 18,
                                       color: rank == 1
-                                          ? AppColors.accent
-                                          : Colors.white38)),
+                                          ? AppColors.primary
+                                          : AppColors.textDark.withValues(alpha: 0.2),
+                                      fontWeight: FontWeight.bold)),
                           ],
                         ),
                       )
                           .animate(delay: (i * 80).ms)
-                          .slideX(begin: 0.2)
+                          .slideX(begin: 0.1)
                           .fadeIn();
                     },
                   ),
@@ -182,7 +220,7 @@ class _ResultScreenState extends State<ResultScreen> {
 
                 // Action buttons
                 _buildButtons(context, winnerName),
-                const SizedBox(height: 12),
+                const SizedBox(height: 24),
               ],
             ),
           ),
@@ -197,50 +235,73 @@ class _ResultScreenState extends State<ResultScreen> {
         Stack(
           alignment: Alignment.center,
           children: [
+            // Outer glow
             Container(
-              width: 100,
-              height: 100,
+              width: 140,
+              height: 140,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: color.withValues(alpha: 0.2),
-                border: Border.all(color: color, width: 4),
+                gradient: RadialGradient(
+                  colors: [color.withValues(alpha: 0.3), Colors.transparent],
+                ),
+              ),
+            ).animate(onPlay: (c) => c.repeat(reverse: true)).scale(begin: const Offset(0.8, 0.8), end: const Offset(1.2, 1.2), duration: 2.seconds),
+            
+            // Podium Card
+            Container(
+              width: 110,
+              height: 110,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
                 boxShadow: [
-                  BoxShadow(
-                      color: AppColors.accent.withValues(alpha: 0.4),
-                      blurRadius: 32,
-                      spreadRadius: 6),
+                  BoxShadow(color: color.withValues(alpha: 0.2), blurRadius: 20, spreadRadius: 5),
                 ],
+                border: Border.all(color: color.withValues(alpha: 0.1), width: 8),
               ),
-            ),
-            Container(
-              width: 78,
-              height: 78,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: color.withValues(alpha: 0.15),
-                border: Border.all(color: AppColors.accent, width: 2),
+              child: Padding(
+                padding: const EdgeInsets.all(4),
+                child: Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      colors: [color, color.withValues(alpha: 0.8)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                  ),
+                  child: const Center(
+                      child: Text('🏆', style: TextStyle(fontSize: 48))),
+                ),
               ),
-              child: const Center(
-                  child: Text('🏆', style: TextStyle(fontSize: 40))),
             ),
           ],
-        ).animate().scale(curve: Curves.elasticOut, delay: 200.ms),
-        const SizedBox(height: 12),
-        Text(name,
+        ).animate().scale(curve: Curves.elasticOut, duration: 1.seconds),
+        const SizedBox(height: 20),
+        Text(name.toUpperCase(),
             style: GoogleFonts.fredoka(
-                fontSize: 26,
-                color: AppColors.accent,
-                fontWeight: FontWeight.bold))
+                fontSize: 32,
+                color: AppColors.textDark,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.5))
             .animate(delay: 400.ms)
             .fadeIn()
             .slideY(begin: 0.2),
-        Text(
-          _isFinals
-              ? 'Tournament Champion! 🎊'
-              : _isTournamentGame
-                  ? 'Group Winner — advances to Finals!'
-                  : 'Winner! 🎉',
-          style: GoogleFonts.nunito(fontSize: 13, color: Colors.white60),
+        const SizedBox(height: 4),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Text(
+            _isFinals
+                ? 'TOURNAMENT CHAMPION! 🎊'
+                : _isTournamentGame
+                    ? 'GROUP WINNER — ADVANCES!'
+                    : 'MATCH WINNER! 🎉',
+            style: GoogleFonts.fredoka(fontSize: 12, color: color, fontWeight: FontWeight.bold),
+          ),
         ).animate(delay: 500.ms).fadeIn(),
       ],
     );
@@ -248,81 +309,103 @@ class _ResultScreenState extends State<ResultScreen> {
 
   Widget _buildButtons(BuildContext context, String winnerName) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
         children: [
           // Share button
           SizedBox(
             width: double.infinity,
+            height: 56,
             child: OutlinedButton.icon(
               onPressed: () => _showShareCard(context, winnerName),
               style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                side: const BorderSide(color: AppColors.darkBorder),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14)),
+                side: BorderSide(color: AppColors.primary.withValues(alpha: 0.2), width: 1.5),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                foregroundColor: AppColors.primary,
               ),
-              icon: const Text('📤', style: TextStyle(fontSize: 16)),
-              label: Text('Share Result',
+              icon: const Icon(Icons.share_outlined, size: 20),
+              label: Text('SHARE VICTORY',
                   style: GoogleFonts.fredoka(
-                      fontSize: 15, color: Colors.white70)),
+                      fontSize: 15, fontWeight: FontWeight.bold, letterSpacing: 1)),
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 16),
           Row(
             children: [
               // Back to bracket if tournament game
               if (_isTournamentGame)
                 Expanded(
-                  child: ElevatedButton(
-                    onPressed: () => context.go('/tournament/bracket'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.accent,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14)),
+                  child: Container(
+                    height: 64,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(24),
+                      gradient: const LinearGradient(colors: [AppColors.primary, Color(0xFF7B85FF)]),
+                      boxShadow: [
+                        BoxShadow(color: AppColors.primary.withValues(alpha: 0.3), blurRadius: 10, offset: const Offset(0, 5)),
+                      ],
                     ),
-                    child: Text('🏆 Back to Bracket',
-                        style: GoogleFonts.fredoka(
-                            fontSize: 15, color: Colors.black)),
+                    child: ElevatedButton(
+                      onPressed: () => context.go('/tournament/bracket'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        foregroundColor: Colors.white,
+                        shadowColor: Colors.transparent,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                      ),
+                      child: Text('BACK TO BRACKET',
+                          style: GoogleFonts.fredoka(
+                              fontSize: 15, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                    ),
                   ),
                 )
               else ...[
                 Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => context.go('/home'),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      side: const BorderSide(color: AppColors.darkBorder),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14)),
+                  child: SizedBox(
+                    height: 64,
+                    child: OutlinedButton(
+                      onPressed: () => context.go('/home'),
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: AppColors.textDark.withValues(alpha: 0.1), width: 1.5),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                        foregroundColor: AppColors.textDark.withValues(alpha: 0.6),
+                      ),
+                      child: Text('HOME',
+                          style: GoogleFonts.fredoka(
+                              fontSize: 15, fontWeight: FontWeight.bold, letterSpacing: 1)),
                     ),
-                    child: Text('🏠 Home',
-                        style: GoogleFonts.fredoka(
-                            fontSize: 15, color: Colors.white70)),
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 16),
                 Expanded(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      // Replay: go back to lobby with last config stored in results
-                      final extra = widget.results['lastLobbyConfig'];
-                      if (extra != null) {
-                        context.go('/lobby', extra: extra as Map<String, dynamic>);
-                      } else {
-                        context.go('/lobby', extra: {'mode': 'quick'});
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14)),
+                  child: Container(
+                    height: 64,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(24),
+                      gradient: const LinearGradient(colors: [AppColors.primary, Color(0xFF7B85FF)]),
+                      boxShadow: [
+                        BoxShadow(color: AppColors.primary.withValues(alpha: 0.3), blurRadius: 10, offset: const Offset(0, 5)),
+                      ],
                     ),
-                    child: Text('🎲 Play Again',
-                        style: GoogleFonts.fredoka(
-                            fontSize: 15, color: Colors.white)),
+                    child: ElevatedButton(
+                      onPressed: () {
+                        // Replay: go back to lobby with last config stored in results
+                        final extra = widget.results['lastLobbyConfig'];
+                        if (extra != null) {
+                          context.go('/lobby', extra: extra as Map<String, dynamic>);
+                        } else {
+                          context.go('/lobby', extra: {'mode': 'quick'});
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        foregroundColor: Colors.white,
+                        shadowColor: Colors.transparent,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                      ),
+                      child: Text('PLAY AGAIN',
+                          style: GoogleFonts.fredoka(
+                              fontSize: 15, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                    ),
                   ),
                 ),
               ],
@@ -362,29 +445,36 @@ class _ResultScreenState extends State<ResultScreen> {
                   ? '🏆 $winnerName wins the tournament!'
                   : null,
             ),
-            const SizedBox(height: 16),
-            ElevatedButton.icon(
-              onPressed: () {
-                // share_plus integration point
-                Navigator.pop(ctx);
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                  content: Text('Screenshot and share!',
-                      style: GoogleFonts.nunito(color: Colors.white)),
-                  backgroundColor: AppColors.darkCard,
-                  behavior: SnackBarBehavior.floating,
+            const SizedBox(height: 24),
+            Container(
+               width: double.infinity,
+               height: 64,
+               decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(24),
+                gradient: const LinearGradient(colors: [AppColors.primary, Color(0xFF7B85FF)]),
+              ),
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  // share_plus integration point
+                  Navigator.pop(ctx);
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text('Screenshot and share!',
+                        style: GoogleFonts.fredoka(color: Colors.white, fontWeight: FontWeight.bold)),
+                    backgroundColor: AppColors.primary,
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16)),
+                  ));
+                },
+                icon: const Icon(Icons.share_rounded, color: Colors.white),
+                label: Text('SHARE NOW',
+                    style: GoogleFonts.fredoka(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  shadowColor: Colors.transparent,
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                ));
-              },
-              icon: const Icon(Icons.share_rounded),
-              label: Text('Share',
-                  style: GoogleFonts.fredoka(fontSize: 15)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 28, vertical: 12),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14)),
+                      borderRadius: BorderRadius.circular(24)),
+                ),
               ),
             ),
           ],

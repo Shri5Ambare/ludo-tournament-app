@@ -6,6 +6,7 @@ import '../game_engine/game_engine.dart';
 import '../ai/ai_engine.dart';
 import '../core/constants/app_constants.dart';
 import '../services/audio_service.dart';
+import '../services/supabase_service.dart';
 
 // ─────────────────────────────────────────────
 // Game Provider
@@ -19,6 +20,7 @@ class GameNotifier extends StateNotifier<GameState?> {
   final Ref _ref;
   Timer? _turnTimer;
   Timer? _aiTimer;
+  StreamSubscription? _remoteSub;
 
   GameNotifier(this._ref) : super(null);
 
@@ -27,16 +29,54 @@ class GameNotifier extends StateNotifier<GameState?> {
     required List<Map<String, dynamic>> playerConfigs,
     String gameMode = GameMode.classic,
     int turnTimerSeconds = AppConstants.defaultTurnSeconds,
+    CustomRules customRules = const CustomRules(),
+    bool isOnline = false,
+    String? roomId,
   }) {
     _cancelTimers();
+    _remoteSub?.cancel();
+
     final initialState = GameEngine.createInitialState(
       playerConfigs: playerConfigs,
       gameMode: gameMode,
       turnTimerSeconds: turnTimerSeconds,
+      customRules: customRules,
+    ).copyWith(
+      isOnline: isOnline,
+      roomId: roomId,
     );
     state = initialState;
+
+    if (isOnline && roomId != null) {
+      _remoteSub = _ref.read(supabaseServiceProvider).gameEvents.listen(_handleRemoteEvent);
+    }
+
     _startTurnTimer();
     _triggerAIIfNeeded();
+  }
+
+  void _handleRemoteEvent(GameEvent event) {
+    final currentState = state;
+    if (currentState == null || !currentState.isOnline) return;
+
+    switch (event.type) {
+      case 'roll_dice':
+        final diceValue = event.payload['value'] as int;
+        _ref.read(audioServiceProvider).playDiceRoll();
+        state = GameEngine.applyDiceRoll(currentState, diceValue);
+        _afterStateUpdate();
+        break;
+      case 'move_token':
+        final tokenId = event.payload['tokenId'] as int;
+        final newState = GameEngine.moveToken(currentState, tokenId);
+        _playMoveSound(currentState, newState, tokenId);
+        state = newState;
+        _afterStateUpdate();
+        break;
+      case 'sync_state':
+        // Optional: full state resync if drift occurs
+        break;
+    }
   }
 
   /// Roll the dice
@@ -50,6 +90,15 @@ class GameNotifier extends StateNotifier<GameState?> {
     _cancelTimers();
     final diceValue = GameEngine.rollDice();
     _ref.read(audioServiceProvider).playDiceRoll();
+
+    if (currentState.isOnline) {
+      _ref.read(supabaseServiceProvider).broadcastEvent(GameEvent(
+        type: 'roll_dice',
+        playerId: '${currentState.currentPlayerIndex}',
+        payload: {'value': diceValue, 'playerIndex': currentState.currentPlayerIndex},
+      ));
+    }
+
     state = GameEngine.applyDiceRoll(currentState, diceValue);
     _afterStateUpdate();
   }
@@ -63,6 +112,14 @@ class GameNotifier extends StateNotifier<GameState?> {
     if (currentState.currentPlayer.isAI) return;
 
     _cancelTimers();
+    if (currentState.isOnline) {
+      _ref.read(supabaseServiceProvider).broadcastEvent(GameEvent(
+        type: 'move_token',
+        playerId: '${currentState.currentPlayerIndex}',
+        payload: {'tokenId': tokenId, 'playerIndex': currentState.currentPlayerIndex},
+      ));
+    }
+
     final newState = GameEngine.moveToken(currentState, tokenId);
     state = newState;
     _playMoveSound(currentState, newState, tokenId);
@@ -232,6 +289,7 @@ class GameNotifier extends StateNotifier<GameState?> {
   @override
   void dispose() {
     _cancelTimers();
+    _remoteSub?.cancel();
     super.dispose();
   }
 }

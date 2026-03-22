@@ -1,5 +1,10 @@
-// lib/models/tournament_model.g.dart
+// GENERATED CODE - DO NOT MODIFY BY HAND
+
 part of 'tournament_model.dart';
+
+// **************************************************************************
+// TypeAdapterGenerator
+// **************************************************************************
 
 class TournamentModelAdapter extends TypeAdapter<TournamentModel> {
   @override
@@ -15,20 +20,21 @@ class TournamentModelAdapter extends TypeAdapter<TournamentModel> {
       id: fields[0] as String?,
       name: fields[1] as String,
       playerNames: (fields[2] as List).cast<String>(),
-      groupAssignments: (fields[3] as List?)?.cast<String>() ?? [],
-      status: fields[4] as String? ?? 'setup',
-      type: fields[5] as String? ?? 'offline',
+      groupAssignments: (fields[3] as List).cast<String>(),
+      status: fields[4] as String,
+      type: fields[5] as String,
       championName: fields[6] as String?,
       createdAt: fields[7] as DateTime?,
-      gameMode: fields[8] as String? ?? GameMode.classic,
-      turnTimerSeconds: fields[9] as int? ?? AppConstants.defaultTurnSeconds,
+      gameMode: fields[8] as String,
+      turnTimerSeconds: fields[9] as int,
+      customRules: fields[10] as CustomRules,
     );
   }
 
   @override
   void write(BinaryWriter writer, TournamentModel obj) {
     writer
-      ..writeByte(10)
+      ..writeByte(11)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -48,7 +54,9 @@ class TournamentModelAdapter extends TypeAdapter<TournamentModel> {
       ..writeByte(8)
       ..write(obj.gameMode)
       ..writeByte(9)
-      ..write(obj.turnTimerSeconds);
+      ..write(obj.turnTimerSeconds)
+      ..writeByte(10)
+      ..write(obj.customRules);
   }
 
   @override

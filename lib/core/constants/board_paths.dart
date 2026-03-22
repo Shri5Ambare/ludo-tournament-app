@@ -32,31 +32,31 @@ class BoardPaths {
     3: [[13, 7], [12, 7], [11, 7], [10, 7], [9, 7], [8, 7]], // Blue
   };
 
-  /// Home base positions (starting yard) for each player
+  /// Home base positions (starting yard) for each player - symmetrically updated
   static const Map<int, List<List<int>>> homeYards = {
-    0: [[1, 1], [1, 3], [3, 1], [3, 3]],   // Red - top-left quadrant
-    1: [[1, 11], [1, 13], [3, 11], [3, 13]], // Green - top-right quadrant
-    2: [[11, 11], [11, 13], [13, 11], [13, 13]], // Yellow - bottom-right quadrant
-    3: [[11, 1], [11, 3], [13, 1], [13, 3]], // Blue - bottom-left quadrant
+    0: [[1, 1], [1, 4], [4, 1], [4, 4]],       // Red - top-left quadrant
+    1: [[1, 10], [1, 13], [4, 10], [4, 13]],   // Blue - top-right quadrant
+    2: [[10, 10], [10, 13], [13, 10], [13, 13]], // Yellow - bottom-right quadrant
+    3: [[10, 1], [10, 4], [13, 1], [13, 4]],   // Green - bottom-left quadrant
   };
 
   /// Player colors
   static const List<Color> playerColors = [
     Color(0xFFE53935), // Red
-    Color(0xFF43A047), // Green
+    Color(0xFF1E88E5), // Blue (Swapped with Green)
     Color(0xFFFDD835), // Yellow
-    Color(0xFF1E88E5), // Blue
+    Color(0xFF43A047), // Green (Swapped with Blue)
   ];
 
   static const List<Color> playerColorsDark = [
     Color(0xFFFF5252), // Red light
-    Color(0xFF69F0AE), // Green light
-    Color(0xFFFFFF00), // Yellow light
     Color(0xFF40C4FF), // Blue light
+    Color(0xFFFFFF00), // Yellow light
+    Color(0xFF69F0AE), // Green light
   ];
 
   /// Player color names
-  static const List<String> playerColorNames = ['Red', 'Green', 'Yellow', 'Blue'];
+  static const List<String> playerColorNames = ['Red', 'Blue', 'Yellow', 'Green'];
 
   /// Safe positions on main path (star squares)
   static const List<int> safePositions = [0, 8, 13, 21, 26, 34, 39, 47];

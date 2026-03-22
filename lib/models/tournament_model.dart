@@ -2,6 +2,7 @@
 import 'package:hive/hive.dart';
 import 'package:uuid/uuid.dart';
 import '../core/constants/app_constants.dart';
+import 'game_models.dart';
 
 part 'tournament_model.g.dart';
 
@@ -39,6 +40,9 @@ class TournamentModel extends HiveObject {
 
   @HiveField(9)
   late int turnTimerSeconds;
+  
+  @HiveField(10)
+  late CustomRules customRules;
 
   TournamentModel({
     String? id,
@@ -51,6 +55,7 @@ class TournamentModel extends HiveObject {
     DateTime? createdAt,
     this.gameMode = GameMode.classic,
     this.turnTimerSeconds = AppConstants.defaultTurnSeconds,
+    this.customRules = const CustomRules(),
   }) {
     this.id = id ?? const Uuid().v4();
     this.createdAt = createdAt ?? DateTime.now();
@@ -97,6 +102,7 @@ class TournamentState {
   final int turnTimerSeconds;
   int currentRound; // 1 = group stage, 2 = finals
   List<TournamentPlayer> roundWinners;
+  final CustomRules customRules;
   TournamentPlayer? champion;
   TournamentStatus status;
 
@@ -109,6 +115,7 @@ class TournamentState {
     this.turnTimerSeconds = AppConstants.defaultTurnSeconds,
     this.currentRound = 1,
     this.roundWinners = const [],
+    this.customRules = const CustomRules(),
     this.champion,
     this.status = TournamentStatus.setup,
   });

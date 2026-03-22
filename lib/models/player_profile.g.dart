@@ -1,7 +1,10 @@
-// lib/models/player_profile.g.dart
-// GENERATED CODE - Manual stub for Hive adapter
+// GENERATED CODE - DO NOT MODIFY BY HAND
 
 part of 'player_profile.dart';
+
+// **************************************************************************
+// TypeAdapterGenerator
+// **************************************************************************
 
 class PlayerProfileAdapter extends TypeAdapter<PlayerProfile> {
   @override
@@ -16,16 +19,16 @@ class PlayerProfileAdapter extends TypeAdapter<PlayerProfile> {
     return PlayerProfile(
       id: fields[0] as String?,
       name: fields[1] as String,
-      avatarEmoji: fields[2] as String? ?? '🎮',
-      wins: fields[3] as int? ?? 0,
-      losses: fields[4] as int? ?? 0,
-      coins: fields[5] as int? ?? 500,
-      xp: fields[6] as int? ?? 0,
-      level: fields[7] as int? ?? 1,
-      winStreak: fields[8] as int? ?? 0,
-      bestRank: fields[9] as int? ?? 0,
-      gamesPlayed: fields[10] as int? ?? 0,
-      tournamentsWon: fields[11] as int? ?? 0,
+      avatarEmoji: fields[2] as String,
+      wins: fields[3] as int,
+      losses: fields[4] as int,
+      coins: fields[5] as int,
+      xp: fields[6] as int,
+      level: fields[7] as int,
+      winStreak: fields[8] as int,
+      bestRank: fields[9] as int,
+      gamesPlayed: fields[10] as int,
+      tournamentsWon: fields[11] as int,
     );
   }
 

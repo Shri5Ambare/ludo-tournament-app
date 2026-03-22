@@ -176,7 +176,7 @@ class FriendsState {
 
 final friendsProvider =
     StateNotifierProvider<FriendsNotifier, FriendsState>((ref) {
-  return FriendsNotifier()..loadMockData();
+  return FriendsNotifier();
 });
 
 class FriendsNotifier extends StateNotifier<FriendsState> {
@@ -187,24 +187,10 @@ class FriendsNotifier extends StateNotifier<FriendsState> {
   // ── Load / refresh ────────────────────────────────────────────────────────
 
   void loadMockData() {
-    // Stub: replace with real Supabase queries in production
-    // Real: supabase.from('friendships').select(...).eq('user_id', currentUserId)
-    state = state.copyWith(
-      friends: _mockFriends,
-      pendingRequests: _mockRequests,
-      gameInvites: _mockInvites,
-    );
-    // Simulate status changes every ~30s
-    _statusTimer = Timer.periodic(
-      const Duration(seconds: 30),
-      (_) => _refreshStatuses(),
-    );
+    // Hidden until needed for development/debugging
   }
 
-  void _refreshStatuses() {
-    // Stub: In real app, subscribe to Supabase Realtime presence channel
-    // supabase.channel('online-users').on(RealtimeListenTypes.presence, ...)
-  }
+
 
   @override
   void dispose() {
@@ -326,53 +312,7 @@ class FriendsNotifier extends StateNotifier<FriendsState> {
 
   // ── Mock data ─────────────────────────────────────────────────────────────
 
-  static final _mockFriends = [
-    const Friend(
-      id: 'u1', username: 'DragonSlayer99', avatarEmoji: '🐉',
-      status: FriendStatus.online, level: 14, wins: 87,
-    ),
-    const Friend(
-      id: 'u2', username: 'LuckyDice', avatarEmoji: '🎲',
-      status: FriendStatus.inGame, level: 8, wins: 42,
-      currentRoomCode: 'ABC123',
-    ),
-    const Friend(
-      id: 'u3', username: 'NepaliGamer', avatarEmoji: '🏔️',
-      status: FriendStatus.online, level: 22, wins: 156,
-    ),
-    const Friend(
-      id: 'u4', username: 'QueenOfLudo', avatarEmoji: '👑',
-      status: FriendStatus.offline, level: 31, wins: 203,
-    ),
-    const Friend(
-      id: 'u5', username: 'TokenMaster', avatarEmoji: '♟️',
-      status: FriendStatus.offline, level: 5, wins: 12,
-    ),
-  ];
 
-  static final _mockRequests = [
-    FriendRequest(
-      id: 'r1', fromId: 'u6', fromUsername: 'BoardKing',
-      fromAvatarEmoji: '👑', status: FriendRequestStatus.pending,
-      sentAt: DateTime.now().subtract(const Duration(hours: 2)),
-      isIncoming: true,
-    ),
-    FriendRequest(
-      id: 'r2', fromId: 'u7', fromUsername: 'SpeedRoller',
-      fromAvatarEmoji: '⚡', status: FriendRequestStatus.pending,
-      sentAt: DateTime.now().subtract(const Duration(minutes: 45)),
-      isIncoming: true,
-    ),
-  ];
-
-  static final _mockInvites = [
-    GameInvite(
-      id: 'i1', fromId: 'u3', fromUsername: 'NepaliGamer',
-      fromAvatarEmoji: '🏔️', roomCode: 'XYZ789',
-      gameMode: 'classic',
-      sentAt: DateTime.now().subtract(const Duration(minutes: 3)),
-    ),
-  ];
 
   List<Friend> _mockSearchResults(String query) {
     final q = query.toLowerCase();

@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_theme.dart';
-import '../../core/constants/app_constants.dart';
+import 'package:ludo_tournament_app/core/constants/app_constants.dart';
 import '../../models/game_models.dart';
 import '../../models/tournament_model.dart';
 import '../../providers/tournament_provider.dart';
@@ -18,21 +18,17 @@ class TournamentBracketScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final tournament = ref.watch(tournamentProvider);
 
-    if (tournament == null) {
-      return const Scaffold(
-        backgroundColor: AppColors.darkBg,
-        body: Center(child: CircularProgressIndicator()),
-      );
-    }
-
     return Scaffold(
-      backgroundColor: AppColors.darkBg,
+      backgroundColor: AppColors.lightBg,
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        title: Text(tournament.name,
-            style: GoogleFonts.fredoka(color: Colors.white, fontSize: 20)),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        centerTitle: true,
+        title: Text('TOURNAMENT BRACKET',
+            style: GoogleFonts.fredoka(color: AppColors.textDark, fontSize: 20, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white),
+          icon: const Icon(Icons.arrow_back_ios_rounded, color: AppColors.textDark),
           onPressed: () {
             showDialog(
               context: context,
@@ -41,9 +37,20 @@ class TournamentBracketScreen extends ConsumerWidget {
           },
         ),
       ),
-      body: tournament.isComplete
-          ? _ChampionScreen(champion: tournament.champion!)
-          : _BracketView(tournament: tournament, ref: ref),
+      body: Stack(
+        children: [
+           Positioned(
+            top: -100, right: -100,
+            child: Container(width: 300, height: 300, decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.05), shape: BoxShape.circle)),
+          ),
+          if (tournament == null)
+            const Center(child: CircularProgressIndicator())
+          else if (tournament.isComplete)
+            _ChampionScreen(champion: tournament.champion!)
+          else
+            _BracketView(tournament: tournament, ref: ref),
+        ],
+      ),
     );
   }
 }
@@ -58,29 +65,32 @@ class _BracketView extends StatelessWidget {
     final isGroupStage = tournament.currentRound == 1;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(24, 110, 24, 40),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Round indicator
-          _RoundBadge(
-            label: isGroupStage ? 'Round 1: Group Stage' : 'Round 2: Finals',
-            icon: isGroupStage ? '⚔️' : '🏆',
+          Center(
+            child: _RoundBadge(
+              label: isGroupStage ? 'GROUP STAGE' : 'FINALS BRACKET',
+              icon: isGroupStage ? '⚔️' : '🏆',
+            ).animate().scale(curve: Curves.elasticOut, duration: 800.ms),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 32),
 
           if (isGroupStage) ...[
             ...tournament.groups.asMap().entries.map((e) {
               return _GroupCard(
                 group: e.value,
                 onPlayGame: () => _launchGroupGame(context, e.value, tournament),
-              ).animate(delay: (e.key * 100).ms).slideY(begin: 0.2).fadeIn();
+              ).animate(delay: (e.key * 100).ms).slideY(begin: 0.2, curve: Curves.easeOutQuad).fadeIn();
             }),
           ] else ...[
             _FinalsCard(
               players: tournament.roundWinners,
               onPlayFinals: () => _launchFinalsGame(context, tournament),
-            ).animate().fadeIn(),
+            ).animate().scale(curve: Curves.easeOutBack, duration: 600.ms).fadeIn(),
           ],
         ],
       ),
@@ -100,6 +110,7 @@ class _BracketView extends StatelessWidget {
       'playerConfigs': configs,
       'gameMode': tournament.gameMode,
       'turnTimerSeconds': tournament.turnTimerSeconds,
+      'customRules': tournament.customRules,
       'tournamentGroupIndex': group.groupIndex,
     });
   }
@@ -116,6 +127,7 @@ class _BracketView extends StatelessWidget {
       'playerConfigs': configs,
       'gameMode': tournament.gameMode,
       'turnTimerSeconds': tournament.turnTimerSeconds,
+      'customRules': tournament.customRules,
       'isFinals': true,
     });
   }
@@ -128,93 +140,119 @@ class _GroupCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color groupColor = group.isComplete
-        ? AppColors.greenPlayer
-        : AppColors.primary;
+    final bool isCompleted = group.isComplete;
+    final Color groupColor = isCompleted ? AppColors.greenPlayer : AppColors.primary;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 24),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(18),
-        color: AppColors.darkCard,
-        border: Border.all(
-            color: groupColor.withValues(alpha: 0.5),
-            width: group.isComplete ? 1.5 : 1),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(32),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 15, offset: const Offset(0, 6)),
+        ],
       ),
       child: Column(
         children: [
           // Group header
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
             decoration: BoxDecoration(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
-              color: groupColor.withValues(alpha: 0.15),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+              color: groupColor.withValues(alpha: 0.05),
             ),
             child: Row(
               children: [
-                Text(group.groupLabel,
-                    style: GoogleFonts.fredoka(
-                        fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold)),
+                Container(
+                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                   decoration: BoxDecoration(color: groupColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(16)),
+                   child: Text(group.groupLabel,
+                      style: GoogleFonts.fredoka(
+                          fontSize: 18, color: groupColor, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                ),
                 const Spacer(),
-                if (group.isComplete)
+                if (isCompleted)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(8),
-                      color: AppColors.greenPlayer.withValues(alpha: 0.2),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(color: AppColors.greenPlayer.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.check_circle_rounded, color: AppColors.greenPlayer, size: 14),
+                        const SizedBox(width: 6),
+                        Text('COMPLETED',
+                            style: GoogleFonts.fredoka(
+                                fontSize: 10, color: AppColors.greenPlayer, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+                      ],
                     ),
-                    child: Text('✅ Done',
-                        style: GoogleFonts.nunito(
-                            fontSize: 12, color: AppColors.greenPlayer)),
                   )
                 else
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(8),
-                      color: AppColors.accent.withValues(alpha: 0.15),
-                    ),
-                    child: Text('Pending',
-                        style: GoogleFonts.nunito(
-                            fontSize: 12, color: AppColors.accent)),
-                  ),
+                  Text('PENDING',
+                      style: GoogleFonts.fredoka(
+                          fontSize: 11, color: AppColors.textDark.withValues(alpha: 0.3), fontWeight: FontWeight.bold, letterSpacing: 1)),
               ],
             ),
           ),
 
           // Players list
-          ...group.players.map((p) => ListTile(
-                dense: true,
-                leading: Text(p.isBot ? '🤖' : '🎮',
-                    style: const TextStyle(fontSize: 20)),
-                title: Text(p.name,
-                    style: GoogleFonts.nunito(
-                        fontSize: 14,
-                        color: group.winnerName == p.name
-                            ? AppColors.accent
-                            : Colors.white)),
-                trailing: group.winnerName == p.name
-                    ? const Text('🏆 Winner',
-                        style: TextStyle(color: AppColors.accent, fontSize: 12))
-                    : null,
-              )),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: group.players.map((p) {
+                final isWinner = group.winnerName == p.name;
+                return Container(
+                   margin: const EdgeInsets.only(bottom: 10),
+                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                   decoration: BoxDecoration(
+                      color: isWinner ? AppColors.accent.withValues(alpha: 0.15) : AppColors.lightBg,
+                      borderRadius: BorderRadius.circular(20),
+                      border: isWinner ? Border.all(color: AppColors.accent.withValues(alpha: 0.3), width: 1.5) : null,
+                   ),
+                   child: Row(
+                     children: [
+                       Container(
+                         padding: const EdgeInsets.all(8),
+                         decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                         child: Text(p.isBot ? '🤖' : '🎮', style: const TextStyle(fontSize: 18)),
+                       ),
+                       const SizedBox(width: 16),
+                       Text(p.name,
+                          style: GoogleFonts.fredoka(
+                              fontSize: 16,
+                              color: AppColors.textDark,
+                              fontWeight: isWinner ? FontWeight.bold : FontWeight.w600)),
+                       const Spacer(),
+                       if (isWinner)
+                          const Icon(Icons.emoji_events_rounded, color: AppColors.accent, size: 22),
+                     ],
+                   ),
+                );
+              }).toList(),
+            ),
+          ),
 
           // Play button
-          if (!group.isComplete)
+          if (!isCompleted)
             Padding(
-              padding: const EdgeInsets.all(12),
-              child: SizedBox(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: Container(
                 width: double.infinity,
+                height: 58,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(24),
+                  gradient: const LinearGradient(colors: [AppColors.primary, Color(0xFF7B85FF)]),
+                  boxShadow: [
+                    BoxShadow(color: AppColors.primary.withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 6)),
+                  ],
+                ),
                 child: ElevatedButton(
                   onPressed: onPlayGame,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                   ),
-                  child: Text('▶ Play ${group.groupLabel} Game',
-                      style: GoogleFonts.fredoka(fontSize: 15, color: Colors.white)),
+                  child: Text('LAUNCH MATCH',
+                      style: GoogleFonts.fredoka(fontSize: 14, color: Colors.white, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
                 ),
               ),
             ),
@@ -232,58 +270,80 @@ class _FinalsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        gradient: LinearGradient(
-          colors: [
-            AppColors.accent.withValues(alpha: 0.2),
-            AppColors.primary.withValues(alpha: 0.15),
-          ],
-        ),
-        border: Border.all(color: AppColors.accent.withValues(alpha: 0.6), width: 2),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(40),
         boxShadow: [
-          BoxShadow(color: AppColors.accent.withValues(alpha: 0.2), blurRadius: 20),
+          BoxShadow(color: AppColors.accent.withValues(alpha: 0.15), blurRadius: 30, offset: const Offset(0, 15)),
         ],
+        border: Border.all(color: AppColors.accent.withValues(alpha: 0.2), width: 3),
       ),
       child: Column(
         children: [
-          Text('🏆 FINALS', style: GoogleFonts.fredoka(
-              fontSize: 28, color: AppColors.accent, letterSpacing: 3)),
-          const SizedBox(height: 4),
-          Text('Group winners compete for the championship',
-              style: GoogleFonts.nunito(fontSize: 13, color: Colors.white60)),
-          const SizedBox(height: 20),
-          ...players.map((p) => Container(
-            margin: const EdgeInsets.only(bottom: 8),
-            padding: const EdgeInsets.all(12),
+          Container(
+            padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10),
-              color: AppColors.darkCard,
+              color: AppColors.accent.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.emoji_events_rounded, color: AppColors.accent, size: 64),
+          ).animate(onPlay: (c) => c.repeat(reverse: true)).scale(begin: const Offset(0.9, 0.9), end: const Offset(1.1, 1.1), duration: 2.seconds),
+          
+          const SizedBox(height: 24),
+          Text('FINALS BRACKET', style: GoogleFonts.fredoka(
+              fontSize: 26, color: AppColors.textDark, fontWeight: FontWeight.bold, letterSpacing: 2)),
+          
+          const SizedBox(height: 12),
+          Text('Group winners qualify for the grand finale!',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.fredoka(fontSize: 13, color: AppColors.textDark.withValues(alpha: 0.4), fontWeight: FontWeight.bold)),
+          
+          const SizedBox(height: 32),
+          ...players.map((p) => Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(24),
+              color: AppColors.lightBg,
+              border: Border.all(color: AppColors.primary.withValues(alpha: 0.05)),
             ),
             child: Row(
               children: [
-                Text(p.isBot ? '🤖' : '🏆', style: const TextStyle(fontSize: 22)),
-                const SizedBox(width: 10),
+                Container(
+                   padding: const EdgeInsets.all(10),
+                   decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                   child: Text(p.isBot ? '🤖' : '👑', style: const TextStyle(fontSize: 20)),
+                ),
+                const SizedBox(width: 16),
                 Text(p.name,
-                    style: GoogleFonts.fredoka(fontSize: 16, color: Colors.white)),
+                    style: GoogleFonts.fredoka(fontSize: 18, color: AppColors.textDark, fontWeight: FontWeight.bold)),
+                const Spacer(),
+                const Icon(Icons.verified_rounded, color: AppColors.primary, size: 24),
               ],
             ),
           )),
-          const SizedBox(height: 16),
-          SizedBox(
+          
+          const SizedBox(height: 32),
+          Container(
             width: double.infinity,
+            height: 64,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(32),
+              gradient: const LinearGradient(colors: [AppColors.accent, Color(0xFFFFE066)]),
+              boxShadow: [
+                BoxShadow(color: AppColors.accent.withValues(alpha: 0.4), blurRadius: 15, offset: const Offset(0, 8)),
+              ],
+            ),
             child: ElevatedButton(
               onPressed: onPlayFinals,
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.accent,
-                foregroundColor: Colors.black,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14)),
+                backgroundColor: Colors.transparent,
+                shadowColor: Colors.transparent,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
               ),
-              child: Text('🎲 Play Finals!',
-                  style: GoogleFonts.fredoka(fontSize: 18, color: Colors.black)),
+              child: Text('PLAY GRAND FINALE',
+                  style: GoogleFonts.fredoka(fontSize: 16, color: AppColors.textDark, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
             ),
           ),
         ],
@@ -298,37 +358,57 @@ class _ChampionScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
+    return Container(
+       width: double.infinity,
+       height: double.infinity,
+       color: Colors.white,
+       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Text('🎊', style: TextStyle(fontSize: 80))
-              .animate().scale(curve: Curves.elasticOut),
-          const SizedBox(height: 20),
-          Text('CHAMPION!',
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              Container(width: 300, height: 300, decoration: BoxDecoration(color: AppColors.accent.withValues(alpha: 0.05), shape: BoxShape.circle)),
+              const Text('🎊', style: TextStyle(fontSize: 120))
+                  .animate(onPlay: (ctrl) => ctrl.repeat(reverse: true)).scale(duration: 1200.ms, begin: const Offset(0.8, 0.8), end: const Offset(1.2, 1.2), curve: Curves.elasticInOut),
+            ],
+          ),
+          const SizedBox(height: 48),
+          Text('TOURNAMENT CHAMPION',
               style: GoogleFonts.fredoka(
-                  fontSize: 40, color: AppColors.accent, letterSpacing: 4))
-              .animate(delay: 300.ms).fadeIn(),
-          const SizedBox(height: 12),
+                  fontSize: 22, color: AppColors.accent, fontWeight: FontWeight.bold, letterSpacing: 3))
+              .animate(delay: 300.ms).fadeIn().scale(curve: Curves.easeOutBack),
+          const SizedBox(height: 16),
           Text(champion.name,
               style: GoogleFonts.fredoka(
-                  fontSize: 28, color: Colors.white, fontWeight: FontWeight.bold))
-              .animate(delay: 500.ms).slideY(begin: 0.3).fadeIn(),
-          const SizedBox(height: 8),
-          Text('Tournament Winner! 🏆',
-              style: GoogleFonts.nunito(fontSize: 16, color: Colors.white60))
-              .animate(delay: 700.ms).fadeIn(),
-          const SizedBox(height: 48),
-          ElevatedButton(
-            onPressed: () => context.go('/home'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  fontSize: 56, color: AppColors.textDark, fontWeight: FontWeight.bold))
+              .animate(delay: 600.ms).slideY(begin: 0.5, curve: Curves.elasticOut, duration: 800.ms).fadeIn(),
+          const SizedBox(height: 16),
+          Text('HE CONQUERED THE BOARD! 🏆',
+              style: GoogleFonts.fredoka(fontSize: 14, color: AppColors.textDark.withValues(alpha: 0.4), fontWeight: FontWeight.bold, letterSpacing: 1.5))
+              .animate(delay: 900.ms).fadeIn(),
+          const SizedBox(height: 80),
+          Container(
+            width: 240,
+            height: 64,
+             decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(32),
+              gradient: const LinearGradient(colors: [AppColors.primary, Color(0xFF7B85FF)]),
+              boxShadow: [
+                BoxShadow(color: AppColors.primary.withValues(alpha: 0.3), blurRadius: 15, offset: const Offset(0, 8)),
+              ],
             ),
-            child: Text('🏠 Back to Home',
-                style: GoogleFonts.fredoka(fontSize: 18, color: Colors.white)),
-          ).animate(delay: 900.ms).fadeIn(),
+            child: ElevatedButton(
+              onPressed: () => context.go('/home'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.transparent,
+                shadowColor: Colors.transparent,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
+              ),
+              child: Text('BACK TO HOME',
+                  style: GoogleFonts.fredoka(fontSize: 16, color: Colors.white, fontWeight: FontWeight.bold, letterSpacing: 1)),
+            ),
+          ).animate(delay: 1200.ms).fadeIn().slideY(begin: 0.5, duration: 600.ms),
         ],
       ),
     );
@@ -343,20 +423,26 @@ class _RoundBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        color: AppColors.darkCard,
-        border: Border.all(color: AppColors.primary.withValues(alpha: 0.4)),
+        borderRadius: BorderRadius.circular(32),
+        color: AppColors.primary,
+        boxShadow: [
+          BoxShadow(color: AppColors.primary.withValues(alpha: 0.3), blurRadius: 15, offset: const Offset(0, 6)),
+        ],
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(icon, style: const TextStyle(fontSize: 20)),
-          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.all(8),
+             decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), shape: BoxShape.circle),
+             child: Text(icon, style: const TextStyle(fontSize: 22)),
+          ),
+          const SizedBox(width: 16),
           Text(label,
               style: GoogleFonts.fredoka(
-                  fontSize: 16, color: Colors.white, fontWeight: FontWeight.bold)),
+                  fontSize: 15, color: Colors.white, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
         ],
       ),
     );
@@ -370,25 +456,43 @@ class _ExitTournamentDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      backgroundColor: AppColors.darkSurface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      title: Text('Exit Tournament?',
-          style: GoogleFonts.fredoka(color: Colors.white, fontSize: 22)),
-      content: Text('Tournament progress will be lost.',
-          style: GoogleFonts.nunito(color: Colors.white70)),
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
+      title: Text('QUIT TOURNAMENT?',
+          textAlign: TextAlign.center,
+          style: GoogleFonts.fredoka(color: AppColors.textDark, fontSize: 22, fontWeight: FontWeight.bold, letterSpacing: 1)),
+      content: Text('Your championship progress will be lost forever. Are you sure?',
+          textAlign: TextAlign.center,
+          style: GoogleFonts.fredoka(color: AppColors.textDark.withValues(alpha: 0.5), fontWeight: FontWeight.bold, fontSize: 13)),
+      actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
       actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: Text('Stay', style: GoogleFonts.nunito(color: AppColors.primary)),
-        ),
-        ElevatedButton(
-          onPressed: () {
-            ref.read(tournamentProvider.notifier).reset();
-            Navigator.pop(context);
-            context.go('/home');
-          },
-          style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
-          child: Text('Exit', style: GoogleFonts.nunito(color: Colors.white)),
+        Row(
+          children: [
+            Expanded(
+              child: TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('STAY', style: GoogleFonts.fredoka(color: AppColors.textDark.withValues(alpha: 0.3), fontWeight: FontWeight.bold, letterSpacing: 1)),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: ElevatedButton(
+                onPressed: () {
+                  ref.read(tournamentProvider.notifier).reset();
+                  Navigator.pop(context);
+                  context.go('/home');
+                },
+                style: ElevatedButton.styleFrom(
+                   backgroundColor: AppColors.error,
+                   foregroundColor: Colors.white,
+                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                   elevation: 0,
+                   padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+                child: Text('QUIT', style: GoogleFonts.fredoka(fontWeight: FontWeight.bold, letterSpacing: 1)),
+              ),
+            ),
+          ],
         ),
       ],
     );

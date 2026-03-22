@@ -49,6 +49,7 @@ dependencies:
 
   # Connectivity
   connectivity_plus: ^5.0.2
+  shake: ^2.2.0
 
   # Supabase (online multiplayer backend)
   supabase_flutter: ^2.3.4

@@ -82,15 +82,19 @@ class LanService {
           (data) => _handleIncoming(data, ws),
           onDone: () {
             _connectedClients.remove(ws);
-            _connectionController
-                .add('CLIENT_LEFT:${_connectedClients.length}');
+            if (!_connectionController.isClosed) {
+              _connectionController
+                  .add('CLIENT_LEFT:${_connectedClients.length}');
+            }
           },
         );
       });
 
       return '$ip:$port';
     } catch (e) {
-      _connectionController.add('HOST_ERROR:$e');
+      if (!_connectionController.isClosed) {
+        _connectionController.add('HOST_ERROR:$e');
+      }
       return null;
     }
   }
@@ -120,12 +124,22 @@ class LanService {
 
       _clientSocket!.listen(
         (data) => _handleIncoming(data, null),
-        onDone: () => _connectionController.add('DISCONNECTED'),
-        onError: (_) => _connectionController.add('CONNECTION_ERROR'),
+        onDone: () {
+          if (!_connectionController.isClosed) {
+            _connectionController.add('DISCONNECTED');
+          }
+        },
+        onError: (_) {
+          if (!_connectionController.isClosed) {
+            _connectionController.add('CONNECTION_ERROR');
+          }
+        },
       );
       return true;
     } catch (e) {
-      _connectionController.add('CONNECT_ERROR:$e');
+      if (!_connectionController.isClosed) {
+        _connectionController.add('CONNECT_ERROR:$e');
+      }
       return false;
     }
   }
@@ -151,7 +165,9 @@ class LanService {
       if (msg.type == 'chat') {
         onChatMessage?.call(msg.data);
       } else {
-        _messageController.add(msg);
+        if (!_messageController.isClosed) {
+          _messageController.add(msg);
+        }
       }
 
       // If host, relay to all other clients (including chat)

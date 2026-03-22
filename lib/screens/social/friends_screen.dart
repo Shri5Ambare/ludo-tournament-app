@@ -54,54 +54,89 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen>
 
   @override
   Widget build(BuildContext context) {
+    final isSignedIn = ref.watch(supabaseServiceProvider).isSignedIn;
     final state = ref.watch(friendsProvider);
 
     return Scaffold(
       backgroundColor: AppColors.darkBg,
       appBar: _buildAppBar(state),
-      body: Column(
-        children: [
-          // ── Game invite banners ──────────────────────────────────
-          if (state.gameInvites.isNotEmpty)
-            ...state.gameInvites.map((inv) => _GameInviteBanner(invite: inv)),
-          // ── Incoming request banner ──────────────────────────────
-          if (state.incoming.isNotEmpty)
-            _RequestsBanner(requests: state.incoming),
-          // ── Tabs ─────────────────────────────────────────────────
-          Container(
-            color: AppColors.darkSurface,
-            child: TabBar(
-              controller: _tabs,
-              labelStyle: GoogleFonts.fredoka(fontSize: 14),
-              unselectedLabelStyle: GoogleFonts.fredoka(fontSize: 13),
-              labelColor: AppColors.primaryLight,
-              unselectedLabelColor: Colors.white38,
-              indicatorColor: AppColors.primary,
-              indicatorSize: TabBarIndicatorSize.label,
-              tabs: [
-                Tab(
-                  child: Row(mainAxisSize: MainAxisSize.min, children: [
-                    const Text('👥 Friends'),
-                    if (state.totalBadgeCount > 0) ...[
-                      const SizedBox(width: 6),
-                      _Badge(count: state.totalBadgeCount),
-                    ],
-                  ]),
-                ),
-                const Tab(text: '🔍 Find Players'),
-              ],
-            ),
-          ),
-          Expanded(
-            child: TabBarView(
-              controller: _tabs,
+      body: !isSignedIn 
+          ? _buildSignInPrompt()
+          : Column(
               children: [
-                _FriendsTab(inviteMode: _inviteMode, activeRoomCode: widget.activeRoomCode, activeGameMode: widget.activeGameMode),
-                _SearchTab(searchController: _searchController),
+                // ── Game invite banners ──────────────────────────────────
+                if (state.gameInvites.isNotEmpty)
+                  ...state.gameInvites.map((inv) => _GameInviteBanner(invite: inv)),
+                // ── Incoming request banner ──────────────────────────────
+                if (state.incoming.isNotEmpty)
+                  _RequestsBanner(requests: state.incoming),
+                // ── Tabs ─────────────────────────────────────────────────
+                Container(
+                  color: AppColors.darkSurface,
+                  child: TabBar(
+                    controller: _tabs,
+                    labelStyle: GoogleFonts.fredoka(fontSize: 14),
+                    unselectedLabelStyle: GoogleFonts.fredoka(fontSize: 13),
+                    labelColor: AppColors.primaryLight,
+                    unselectedLabelColor: Colors.white38,
+                    indicatorColor: AppColors.primary,
+                    indicatorSize: TabBarIndicatorSize.label,
+                    tabs: [
+                      Tab(
+                        child: Row(mainAxisSize: MainAxisSize.min, children: [
+                          const Text('👥 Friends'),
+                          if (state.totalBadgeCount > 0) ...[
+                            const SizedBox(width: 6),
+                            _Badge(count: state.totalBadgeCount),
+                          ],
+                        ]),
+                      ),
+                      const Tab(text: '🔍 Find Players'),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: TabBarView(
+                    controller: _tabs,
+                    children: [
+                      _FriendsTab(inviteMode: _inviteMode, activeRoomCode: widget.activeRoomCode, activeGameMode: widget.activeGameMode),
+                      _SearchTab(searchController: _searchController),
+                    ],
+                  ),
+                ),
               ],
             ),
-          ),
-        ],
+    );
+  }
+
+  Widget _buildSignInPrompt() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(40),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text('🔐', style: TextStyle(fontSize: 60)),
+            const SizedBox(height: 24),
+            Text('Sign in to See Friends',
+                style: GoogleFonts.fredoka(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 12),
+            Text('Join the community to challenge your friends, track your wins, and climb the global leaderboard!',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.nunito(color: Colors.white60, fontSize: 14)),
+            const SizedBox(height: 32),
+            ElevatedButton(
+              onPressed: () => context.push('/online/auth'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              ),
+              child: Text('SIGN IN NOW', style: GoogleFonts.fredoka(fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
       ),
     );
   }

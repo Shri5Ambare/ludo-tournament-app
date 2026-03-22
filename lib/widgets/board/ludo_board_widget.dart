@@ -198,43 +198,63 @@ class _TokenWidgetState extends State<_TokenWidget>
               height: widget.size,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: widget.isFinished
-                    ? color.withValues(alpha: 0.9)
-                    : color,
-                border: Border.all(
-                  color: widget.isMovable
-                      ? Colors.white
-                      : color.withValues(alpha: 0.6),
-                  width: widget.isMovable ? 2.5 : 1.5,
+                gradient: RadialGradient(
+                  colors: [
+                    Colors.white.withValues(alpha: 0.8),
+                    color,
+                    color.withValues(alpha: 0.8),
+                  ],
+                  stops: const [0.0, 0.4, 1.0],
+                  center: const Alignment(-0.3,-0.3),
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: widget.isMovable
-                        ? Colors.white.withValues(alpha: 0.6)
-                        : widget.isFinished
-                            ? color.withValues(alpha: 0.7)
-                            : color.withValues(alpha: 0.3),
-                    blurRadius: widget.isMovable
-                        ? _glow.value
-                        : widget.isFinished
-                            ? 10
-                            : 4,
-                    spreadRadius: widget.isMovable ? 2 : 0,
+                    color: Colors.black.withValues(alpha: 0.15),
+                    offset: const Offset(0, 4),
+                    blurRadius: 6,
                   ),
+                  if (widget.isMovable)
+                    BoxShadow(
+                      color: Colors.white.withValues(alpha: 0.8),
+                      blurRadius: _glow.value,
+                      spreadRadius: 2,
+                    ),
                 ],
               ),
-              child: Center(
-                child: widget.isFinished
-                    ? Icon(Icons.star_rounded,
-                        color: Colors.white, size: widget.size * 0.5)
-                    : Text(
-                        '${widget.tokenId + 1}',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: widget.size * 0.4,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+              child: Stack(
+                children: [
+                   // Shining gloss
+                   Positioned(
+                     left: widget.size * 0.2, top: widget.size *0.15,
+                     child: Container(
+                       width: widget.size*0.35, height: widget.size*0.2,
+                       decoration: BoxDecoration(
+                         borderRadius: BorderRadius.circular(10),
+                         color: Colors.white.withValues(alpha: 0.4),
+                       ),
+                     ),
+                   ),
+                   Center(
+                    child: widget.isFinished
+                        ? Icon(Icons.star_rounded,
+                            color: Colors.white, size: widget.size * 0.5)
+                        : Text(
+                            '${widget.tokenId + 1}',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: widget.size * 0.4,
+                              fontWeight: FontWeight.bold,
+                              shadows: [
+                                Shadow(
+                                  color: Colors.black.withValues(alpha: 0.3),
+                                  offset: const Offset(0, 1),
+                                  blurRadius: 2,
+                                ),
+                              ],
+                            ),
+                          ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -286,24 +306,29 @@ class LudoBoardPainter extends CustomPainter {
     ];
 
     for (int i = 0; i < 4; i++) {
-      final paint = Paint()..color = colors[i].withValues(alpha: 0.15);
+      final rRect = RRect.fromRectAndRadius(rects[i], Radius.circular(cw * 1.5));
+      // Outer colored square
+      canvas.drawRRect(rRect, Paint()..color = colors[i].withValues(alpha: 0.15));
       canvas.drawRRect(
-        RRect.fromRectAndRadius(rects[i].deflate(2), const Radius.circular(8)),
-        paint,
+        rRect,
+        Paint()
+          ..color = colors[i].withValues(alpha: 0.3)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2.0,
       );
-      final borderPaint = Paint()
-        ..color = colors[i].withValues(alpha: 0.4)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.5;
+
+      // Inner white rounded rect
+      final innerRect = rects[i].deflate(cw * 1.0);
       canvas.drawRRect(
-        RRect.fromRectAndRadius(rects[i].deflate(2), const Radius.circular(8)),
-        borderPaint,
+        RRect.fromRectAndRadius(innerRect, Radius.circular(cw * 1.0)),
+        Paint()..color = theme.centerBg, // Usually near-white
       );
-      final innerPaint = Paint()..color = theme.yardOverlay;
-      final innerRect = rects[i].deflate(cw * 0.8);
       canvas.drawRRect(
-        RRect.fromRectAndRadius(innerRect, const Radius.circular(6)),
-        innerPaint,
+        RRect.fromRectAndRadius(innerRect, Radius.circular(cw * 0.6)),
+        Paint()
+          ..color = theme.gridLine
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.0,
       );
 
       // Token circles
@@ -311,21 +336,17 @@ class LudoBoardPainter extends CustomPainter {
       for (final pos in yards) {
         final cx = pos[1] * cw + cw / 2;
         final cy = pos[0] * ch + ch / 2;
-        final r = cw * 0.35;
-        final circlePaint = Paint()..color = colors[i].withValues(alpha: 0.3);
-        canvas.drawCircle(Offset(cx, cy), r, circlePaint);
-        // Neon glow ring
-        if (theme.glowEffect) {
-          final glowPaint = Paint()
-            ..color = colors[i].withValues(alpha: 0.15)
-            ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
-          canvas.drawCircle(Offset(cx, cy), r + 4, glowPaint);
-        }
-        final circleStroke = Paint()
-          ..color = colors[i].withValues(alpha: 0.7)
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 1.5;
-        canvas.drawCircle(Offset(cx, cy), r, circleStroke);
+        final r = cw * 0.45;
+        
+        canvas.drawCircle(Offset(cx, cy), r, Paint()..color = colors[i]);
+        canvas.drawCircle(
+          Offset(cx, cy),
+          r,
+          Paint()
+            ..color = theme.gridLine
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1.0,
+        );
       }
     }
   }
@@ -336,59 +357,59 @@ class LudoBoardPainter extends CustomPainter {
     final borderPaint = Paint()
       ..color = theme.gridLine
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 0.5;
+      ..strokeWidth = 1.0;
 
     for (int i = 0; i < BoardPaths.mainPath.length; i++) {
       final cell = BoardPaths.mainPath[i];
       final rect = Rect.fromLTWH(
-        cell[1] * cw + 0.5, cell[0] * ch + 0.5, cw - 1, ch - 1,
+        cell[1] * cw + 1.5, cell[0] * ch + 1.5, cw - 3, ch - 3,
       );
+      final rRect = RRect.fromRectAndRadius(rect, const Radius.circular(6));
       final isSafe = BoardPaths.safePositions.contains(i);
-      canvas.drawRect(rect, isSafe ? safePaint : cellPaint);
-      canvas.drawRect(rect, borderPaint);
+      
+      canvas.drawRRect(rRect, Paint()..color = isSafe ? safePaint.color : cellPaint.color);
+      canvas.drawRRect(rRect, borderPaint);
 
-      if (isSafe && i != 0) {
-        // Glow on safe cells for neon/diwali
-        if (theme.glowEffect) {
-          final glowPaint = Paint()
-            ..color = theme.safeCellColor.withValues(alpha: 0.4)
-            ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
-          canvas.drawRect(rect, glowPaint);
-        }
-        _drawStar(canvas, rect.center, cw * 0.25,
-            Colors.white.withValues(alpha: theme.glowEffect ? 0.55 : 0.3));
+      // Only draw stars strictly on [8, 21, 34, 47]
+      if ([8, 21, 34, 47].contains(i)) {
+         if (theme.glowEffect) {
+           _drawStar(canvas, rect.center, cw * 0.45,
+               BoardPaths.playerColors[i~/13].withValues(alpha: 0.5), glow: true);
+         }
+        _drawStar(canvas, rect.center, cw * 0.35,
+            BoardPaths.playerColors[i~/13]);
       }
     }
 
-    // Player start positions
+    // Player start positions drawn fully solid matching the base color
     for (int p = 0; p < 4; p++) {
       final startIdx = BoardPaths.playerStartIndex[p];
       final cell = BoardPaths.mainPath[startIdx];
       final rect = Rect.fromLTWH(
         cell[1] * cw + 0.5, cell[0] * ch + 0.5, cw - 1, ch - 1,
       );
-      final paint = Paint()..color = _playerColors[p].withValues(alpha: 0.5);
-      canvas.drawRect(rect, paint);
+      canvas.drawRect(rect, Paint()..color = _playerColors[p]);
+      canvas.drawRect(rect, borderPaint);
     }
   }
 
   void _drawHomeColumns(Canvas canvas, double cw, double ch) {
     final colors = _playerColors;
+    final borderPaint = Paint()
+      ..color = Colors.black.withValues(alpha: 0.25)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.2;
+
     for (int p = 0; p < 4; p++) {
       final cells = BoardPaths.homeColumns[p]!;
       for (int i = 0; i < cells.length; i++) {
         final cell = cells[i];
         final rect = Rect.fromLTWH(
-          cell[1] * cw + 0.5, cell[0] * ch + 0.5, cw - 1, ch - 1,
+          cell[1] * cw + 1.5, cell[0] * ch + 1.5, cw - 3, ch - 3,
         );
-        final paint = Paint()
-          ..color = colors[p].withValues(alpha: 0.2 + i * 0.05);
-        canvas.drawRect(rect, paint);
-        final borderPaint = Paint()
-          ..color = colors[p].withValues(alpha: 0.5)
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 0.5;
-        canvas.drawRect(rect, borderPaint);
+        final rRect = RRect.fromRectAndRadius(rect, const Radius.circular(6));
+        canvas.drawRRect(rRect, Paint()..color = colors[p].withValues(alpha: 0.1));
+        canvas.drawRRect(rRect, borderPaint);
       }
     }
   }
@@ -400,13 +421,6 @@ class LudoBoardPainter extends CustomPainter {
     final halfH = ch * 1.5;
     final colors = _playerColors;
 
-    // Center background
-    final bgPaint = Paint()..color = theme.centerBg;
-    canvas.drawRect(
-      Rect.fromCenter(center: Offset(cx, cy), width: halfW * 2, height: halfH * 2),
-      bgPaint,
-    );
-
     final triangles = [
       [Offset(cx - halfW, cy - halfH), Offset(cx + halfW, cy - halfH), Offset(cx, cy)],
       [Offset(cx + halfW, cy - halfH), Offset(cx + halfW, cy + halfH), Offset(cx, cy)],
@@ -414,24 +428,25 @@ class LudoBoardPainter extends CustomPainter {
       [Offset(cx - halfW, cy + halfH), Offset(cx - halfW, cy - halfH), Offset(cx, cy)],
     ];
 
-    for (int i = 0; i < 4; i++) {
-      final path = Path()
-        ..moveTo(triangles[i][0].dx, triangles[i][0].dy)
-        ..lineTo(triangles[i][1].dx, triangles[i][1].dy)
-        ..lineTo(triangles[i][2].dx, triangles[i][2].dy)
-        ..close();
-      final paint = Paint()..color = colors[i].withValues(alpha: 0.35);
-      canvas.drawPath(path, paint);
-      if (theme.glowEffect) {
-        final glowPaint = Paint()
-          ..color = colors[i].withValues(alpha: 0.1)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
-        canvas.drawPath(path, glowPaint);
-      }
-    }
+    final triangleIndices = [3, 0, 1, 2];
 
-    _drawStar(canvas, Offset(cx, cy), cw * 0.8,
-        Colors.white.withValues(alpha: theme.glowEffect ? 0.7 : 0.5));
+    for (int i = 0; i < 4; i++) {
+      final tOffsets = triangles[triangleIndices[i]];
+      final path = Path()
+        ..moveTo(tOffsets[0].dx, tOffsets[0].dy)
+        ..lineTo(tOffsets[1].dx, tOffsets[1].dy)
+        ..lineTo(tOffsets[2].dx, tOffsets[2].dy)
+        ..close();
+      
+      canvas.drawPath(path, Paint()..color = colors[i]);
+      canvas.drawPath(
+        path,
+        Paint()
+          ..color = theme.gridLine
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.0,
+      );
+    }
   }
 
   void _drawGrid(Canvas canvas, Size size, double cw, double ch) {
@@ -446,13 +461,16 @@ class LudoBoardPainter extends CustomPainter {
     }
   }
 
-  void _drawStar(Canvas canvas, Offset center, double radius, Color color) {
+  void _drawStar(Canvas canvas, Offset center, double radius, Color color, {bool glow = false}) {
     final paint = Paint()..color = color;
+    if (glow) {
+       paint.maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
+    }
     final path = Path();
     for (int i = 0; i < 5; i++) {
       final angle = (i * 4 * pi) / 5 - pi / 2;
-      final x = center.dx + radius * _cos(angle);
-      final y = center.dy + radius * _sin(angle);
+      final x = center.dx + radius * cos(angle);
+      final y = center.dy + radius * sin(angle);
       if (i == 0) {
         path.moveTo(x, y);
       } else {
@@ -461,20 +479,6 @@ class LudoBoardPainter extends CustomPainter {
     }
     path.close();
     canvas.drawPath(path, paint);
-  }
-
-  double _cos(double r) {
-    r = r % (2 * pi);
-    double result = 1, term = 1;
-    for (int i = 1; i <= 10; i++) { term *= -r * r / ((2*i-1) * (2*i)); result += term; }
-    return result;
-  }
-
-  double _sin(double r) {
-    r = r % (2 * pi);
-    double result = r, term = r;
-    for (int i = 1; i <= 10; i++) { term *= -r * r / ((2*i) * (2*i+1)); result += term; }
-    return result;
   }
 
   @override

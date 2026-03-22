@@ -17,75 +17,75 @@ class BoardThemeSelector extends ConsumerWidget {
     final settings = ref.watch(settingsProvider);
     const themeIds = BoardThemes.all;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('Board Theme',
-            style: GoogleFonts.fredoka(
-                fontSize: 16, color: Colors.white, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 12),
-        SizedBox(
-          height: 96,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            itemCount: themeIds.length,
-            itemBuilder: (context, i) {
-              final td = BoardThemes.get(themeIds[i]);
-              final isSelected = settings.boardTheme == td.id;
-              return GestureDetector(
-                onTap: () {
-                  HapticFeedback.lightImpact();
-                  ref.read(settingsProvider.notifier).setBoardTheme(td.id);
-                },
-                child: AnimatedContainer(
-                  duration: 220.ms,
-                  margin: const EdgeInsets.only(right: 12),
-                  width: 80,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(14),
-                    color: td.background,
-                    border: Border.all(
-                      color: isSelected ? AppColors.accent : Colors.white12,
-                      width: isSelected ? 2.5 : 1,
-                    ),
-                    boxShadow: isSelected
-                        ? [
-                            BoxShadow(
-                              color: (td.playerColors.isNotEmpty
-                                      ? td.playerColors.first
-                                      : AppColors.accent)
-                                  .withValues(alpha: 0.4),
-                              blurRadius: 14,
-                              spreadRadius: 2,
-                            ),
-                          ]
-                        : [],
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _MiniBoardPreview(themeData: td),
-                      const SizedBox(height: 6),
-                      Text(td.emoji,
-                          style: const TextStyle(fontSize: 14)),
-                      Text(td.label,
-                          style: GoogleFonts.nunito(
-                              fontSize: 10,
-                              color: isSelected ? Colors.white : Colors.white54,
-                              fontWeight: isSelected
-                                  ? FontWeight.bold
-                                  : FontWeight.normal)),
-                      if (isSelected)
-                        const Icon(Icons.check_circle_rounded,
-                            color: AppColors.accent, size: 12),
-                    ],
-                  ),
-                ),
-              ).animate(delay: (i * 50).ms).fadeIn().slideX(begin: 0.1);
+    return SizedBox(
+      height: 110,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        itemCount: themeIds.length,
+        itemBuilder: (context, i) {
+          final td = BoardThemes.get(themeIds[i]);
+          final isSelected = settings.boardTheme == td.id;
+          final borderColor = td.playerColors.isNotEmpty ? td.playerColors.first : AppColors.primary;
+
+          return GestureDetector(
+            onTap: () {
+              HapticFeedback.lightImpact();
+              ref.read(settingsProvider.notifier).setBoardTheme(td.id);
             },
-          ),
-        ),
-      ],
+            child: AnimatedContainer(
+              duration: 250.ms,
+              margin: const EdgeInsets.only(right: 16),
+              width: 86,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                color: AppColors.lightBg,
+                border: Border.all(
+                  color: isSelected ? borderColor : AppColors.textDark.withValues(alpha: 0.05),
+                  width: isSelected ? 2.5 : 1.5,
+                ),
+                boxShadow: isSelected
+                    ? [
+                         BoxShadow(
+                          color: borderColor.withValues(alpha: 0.2),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ]
+                    : [],
+              ),
+              child: Stack(
+                children: [
+                   Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        _MiniBoardPreview(themeData: td),
+                        const SizedBox(height: 8),
+                        Text(td.emoji,
+                            style: const TextStyle(fontSize: 16)),
+                        const SizedBox(height: 2),
+                        Text(td.label.toUpperCase(),
+                            style: GoogleFonts.fredoka(
+                                fontSize: 9,
+                                color: isSelected ? AppColors.textDark : AppColors.textDark.withValues(alpha: 0.4),
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 0.5)),
+                      ],
+                    ),
+                  ),
+                  if (isSelected)
+                    Positioned(
+                      top: 6, right: 6,
+                      child: Icon(Icons.check_circle_rounded,
+                          color: borderColor, size: 16),
+                    ),
+                ],
+              ),
+            ),
+          ).animate(delay: (i * 50).ms).fadeIn().scale(begin: const Offset(0.9, 0.9));
+        },
+      ),
     );
   }
 }

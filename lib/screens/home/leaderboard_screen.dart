@@ -1,38 +1,40 @@
 // lib/screens/home/leaderboard_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_theme.dart';
+import '../../services/supabase_service.dart';
 
-class LeaderboardScreen extends StatefulWidget {
+class LeaderboardScreen extends ConsumerStatefulWidget {
   const LeaderboardScreen({super.key});
 
   @override
-  State<LeaderboardScreen> createState() => _LeaderboardScreenState();
+  ConsumerState<LeaderboardScreen> createState() => _LeaderboardScreenState();
 }
 
-class _LeaderboardScreenState extends State<LeaderboardScreen>
+class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-
-  // Mock data for display
-  final List<Map<String, dynamic>> _globalLeaders = [
-    {'name': 'DragonSlayer', 'wins': 428, 'level': 45, 'avatar': '🐉'},
-    {'name': 'LudoMaster', 'wins': 391, 'level': 42, 'avatar': '👑'},
-    {'name': 'StrategyKing', 'wins': 355, 'level': 38, 'avatar': '⚔️'},
-    {'name': 'SwiftMover', 'wins': 302, 'level': 33, 'avatar': '⚡'},
-    {'name': 'TokenCutter', 'wins': 278, 'level': 29, 'avatar': '✂️'},
-    {'name': 'BoardWizard', 'wins': 241, 'level': 25, 'avatar': '🧙'},
-    {'name': 'DiceRoller', 'wins': 198, 'level': 21, 'avatar': '🎲'},
-    {'name': 'QuickPlayer', 'wins': 165, 'level': 17, 'avatar': '🏃'},
-    {'name': 'SafeZonePro', 'wins': 134, 'level': 14, 'avatar': '🛡️'},
-    {'name': 'YoungStar', 'wins': 98, 'level': 10, 'avatar': '⭐'},
-  ];
+  List<LeaderboardEntry> _globalLeaders = [];
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _fetchLeaders();
+  }
+
+  Future<void> _fetchLeaders() async {
+    final svc = ref.read(supabaseServiceProvider);
+    final results = await svc.fetchGlobalLeaderboard();
+    if (mounted) {
+      setState(() {
+        _globalLeaders = results;
+        _isLoading = false;
+      });
+    }
   }
 
   @override
@@ -44,60 +46,79 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.darkBg,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: Theme.of(context).cardColor,
+        elevation: 0,
         title: Text('Leaderboard',
-            style: GoogleFonts.fredoka(color: Colors.white, fontSize: 22)),
+            style: GoogleFonts.fredoka(color: Theme.of(context).textTheme.bodyLarge?.color, fontSize: 24, fontWeight: FontWeight.bold)),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white),
+          icon: Icon(Icons.arrow_back_ios_rounded, color: Theme.of(context).textTheme.bodyLarge?.color),
           onPressed: () => Navigator.pop(context),
         ),
         bottom: TabBar(
           controller: _tabController,
-          indicatorColor: AppColors.accent,
-          labelStyle: GoogleFonts.fredoka(fontSize: 14),
-          unselectedLabelStyle: GoogleFonts.nunito(fontSize: 13),
+          indicatorColor: AppColors.primary,
+          indicatorWeight: 4,
+          indicatorSize: TabBarIndicatorSize.label,
+          labelColor: AppColors.primary,
+          unselectedLabelColor: AppColors.textDark.withValues(alpha: 0.4),
+          labelStyle: GoogleFonts.fredoka(fontSize: 14, fontWeight: FontWeight.bold),
+          unselectedLabelStyle: GoogleFonts.fredoka(fontSize: 14, fontWeight: FontWeight.w500),
           tabs: const [
-            Tab(text: '🌐 Global'),
-            Tab(text: '📅 Weekly'),
-            Tab(text: '🏆 Tournament'),
+            Tab(text: 'GLOBAL'),
+            Tab(text: 'WEEKLY'),
+            Tab(text: 'FRIENDS'),
           ],
         ),
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          _LeaderboardList(players: _globalLeaders),
-          _LeaderboardList(
-              players: _globalLeaders.reversed.take(7).toList()),
-          _LeaderboardList(
-              players: _globalLeaders.where((p) => p['wins'] > 200).toList()),
-        ],
-      ),
+      body: _isLoading 
+        ? const Center(child: CircularProgressIndicator())
+        : TabBarView(
+            controller: _tabController,
+            children: [
+              _LeaderboardList(players: _globalLeaders),
+              _LeaderboardList(players: _globalLeaders.take(5).toList()),
+              _LeaderboardList(players: _globalLeaders.where((p) => p.wins > 10).toList()),
+            ],
+          ),
     );
   }
 }
 
 class _LeaderboardList extends StatelessWidget {
-  final List<Map<String, dynamic>> players;
+  final List<LeaderboardEntry> players;
   const _LeaderboardList({required this.players});
 
   @override
   Widget build(BuildContext context) {
+    if (players.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text('🏆', style: TextStyle(fontSize: 60)),
+            const SizedBox(height: 16),
+            Text('No leaders yet.\nBe the first to claim the throne!',
+                style: GoogleFonts.fredoka(color: Theme.of(context).textTheme.bodyLarge?.color?.withValues(alpha: 0.4), fontSize: 16),
+                textAlign: TextAlign.center),
+          ],
+        ),
+      );
+    }
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
+      physics: const BouncingScrollPhysics(),
       itemCount: players.length,
       itemBuilder: (context, i) {
         final p = players[i];
-        final rank = i + 1;
         return _LeaderRow(
-          rank: rank,
-          name: p['name'] as String,
-          wins: p['wins'] as int,
-          level: p['level'] as int,
-          avatar: p['avatar'] as String,
-        ).animate(delay: (i * 50).ms).slideX(begin: 0.2).fadeIn();
+          rank: p.rank,
+          name: p.username,
+          wins: p.wins,
+          level: p.level,
+          avatar: p.avatarEmoji,
+        ).animate(delay: (i * 50).ms).slideY(begin: 0.1, curve: Curves.easeOutBack).fadeIn();
       },
     );
   }
@@ -120,53 +141,47 @@ class _LeaderRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isTop3 = rank <= 3;
-    final rankColors = [
-      AppColors.accent,
-      const Color(0xFFBDBDBD),
-      const Color(0xFFCD7F32),
-    ];
-    final rankColor = isTop3 ? rankColors[rank - 1] : AppColors.textMuted;
+    final bool isTop3 = rank <= 3;
+    final Color rankColor = isTop3 
+        ? (rank == 1 ? AppColors.accent : (rank == 2 ? const Color(0xFFBDBDBD) : const Color(0xFFCD7F32)))
+        : Theme.of(context).textTheme.bodyLarge!.color!.withValues(alpha: 0.3);
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        color: isTop3
-            ? rankColor.withValues(alpha: 0.08)
-            : AppColors.darkCard,
-        border: Border.all(
-          color: isTop3 ? rankColor.withValues(alpha: 0.4) : AppColors.darkBorder,
-          width: isTop3 ? 1.5 : 1,
-        ),
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 10, offset: const Offset(0, 4)),
+        ],
+        border: isTop3 ? Border.all(color: rankColor.withValues(alpha: 0.3), width: 2) : null,
       ),
       child: Row(
         children: [
           // Rank
           SizedBox(
-            width: 36,
+            width: 40,
             child: Text(
               _rankDisplay(rank),
               style: GoogleFonts.fredoka(
-                  fontSize: isTop3 ? 22 : 16, color: rankColor),
+                  fontSize: isTop3 ? 24 : 16, color: rankColor, fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 12),
           // Avatar
           Container(
-            width: 42,
-            height: 42,
+            width: 50,
+            height: 50,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: rankColor.withValues(alpha: 0.15),
-              border: Border.all(color: rankColor.withValues(alpha: 0.4)),
+              color: rankColor.withValues(alpha: 0.1),
             ),
             child: Center(
-                child: Text(avatar, style: const TextStyle(fontSize: 20))),
+                child: Text(avatar, style: const TextStyle(fontSize: 24))),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 16),
           // Name + level
           Expanded(
             child: Column(
@@ -175,12 +190,11 @@ class _LeaderRow extends StatelessWidget {
                 Text(name,
                     style: GoogleFonts.fredoka(
                         fontSize: 16,
-                        color: Colors.white,
-                        fontWeight:
-                            isTop3 ? FontWeight.bold : FontWeight.normal)),
-                Text('Level $level',
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
+                        fontWeight: FontWeight.bold)),
+                Text('Lvl $level',
                     style: GoogleFonts.nunito(
-                        fontSize: 11, color: AppColors.textMuted)),
+                        fontSize: 12, color: Theme.of(context).textTheme.bodyLarge?.color?.withValues(alpha: 0.4), fontWeight: FontWeight.bold)),
               ],
             ),
           ),
@@ -190,10 +204,10 @@ class _LeaderRow extends StatelessWidget {
             children: [
               Text('$wins',
                   style: GoogleFonts.fredoka(
-                      fontSize: 20, color: isTop3 ? rankColor : Colors.white)),
-              Text('wins',
-                  style: GoogleFonts.nunito(
-                      fontSize: 10, color: AppColors.textMuted)),
+                      fontSize: 20, color: AppColors.primary, fontWeight: FontWeight.bold)),
+              Text('WINS',
+                  style: GoogleFonts.fredoka(
+                      fontSize: 10, color: Theme.of(context).textTheme.bodyLarge?.color?.withValues(alpha: 0.3), fontWeight: FontWeight.bold)),
             ],
           ),
         ],
@@ -206,7 +220,7 @@ class _LeaderRow extends StatelessWidget {
       case 1: return '🥇';
       case 2: return '🥈';
       case 3: return '🥉';
-      default: return '#$rank';
+      default: return '$rank';
     }
   }
 }

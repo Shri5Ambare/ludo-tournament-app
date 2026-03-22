@@ -43,14 +43,32 @@ class ChatFab extends ConsumerWidget {
                 color: isOpen ? AppColors.primaryLight : AppColors.darkBorder,
                 width: 1.5,
               ),
-              boxShadow: isOpen
-                  ? [BoxShadow(color: AppColors.primary.withValues(alpha: 0.4), blurRadius: 12)]
+              boxShadow: (unread > 0 && !isOpen) || isOpen
+                  ? [
+                      BoxShadow(
+                        color: (isOpen ? AppColors.primary : AppColors.redPlayer)
+                            .withValues(alpha: 0.4),
+                        blurRadius: isOpen ? 12 : 8,
+                        spreadRadius: unread > 0 && !isOpen ? 2 : 0,
+                      )
+                    ]
                   : null,
             ),
             child: Center(
               child: Text(isOpen ? '✕' : '💬',
                   style: TextStyle(fontSize: isOpen ? 16 : 20)),
             ),
+          ).animate(target: (unread > 0 && !isOpen) ? 1 : 0).shimmer(
+            duration: 1.5.seconds,
+            color: AppColors.redPlayer.withValues(alpha: 0.2),
+          ).scale(
+            begin: const Offset(1, 1),
+            end: const Offset(1.08, 1.08),
+            duration: 800.ms,
+            curve: Curves.easeInOut,
+          ).then(delay: 800.ms).scale(
+            begin: const Offset(1.08, 1.08),
+            end: const Offset(1, 1),
           ),
           if (unread > 0 && !isOpen)
             Positioned(

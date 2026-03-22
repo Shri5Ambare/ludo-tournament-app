@@ -28,42 +28,42 @@ class ThemeModeNotifier extends StateNotifier<ThemeMode> {
 }
 
 class AppColors {
-  // Primary palette
-  static const Color primary = Color(0xFF6C3CE1);
-  static const Color primaryLight = Color(0xFF9C6FFF);
-  static const Color primaryDark = Color(0xFF4A1DB0);
+  // Primary palette (Playful)
+  static const Color primary = Color(0xFF8E97FD);
+  static const Color primaryLight = Color(0xFFADB5FF);
+  static const Color primaryDark = Color(0xFF6C76E1);
 
-  static const Color accent = Color(0xFFFFB800);
-  static const Color accentLight = Color(0xFFFFD54F);
+  static const Color accent = Color(0xFFFFD93D);
+  static const Color accentLight = Color(0xFFFFE57F);
 
-  // Player colors
-  static const Color redPlayer = Color(0xFFE53935);
-  static const Color greenPlayer = Color(0xFF43A047);
-  static const Color yellowPlayer = Color(0xFFFDD835);
-  static const Color bluePlayer = Color(0xFF1E88E5);
+  // Player colors (Pastel)
+  static const Color redPlayer = Color(0xFFFF6B6B);
+  static const Color greenPlayer = Color(0xFF6BCB77);
+  static const Color yellowPlayer = Color(0xFFFDCB6E);
+  static const Color bluePlayer = Color(0xFF4D96FF);
 
-  // Dark theme
-  static const Color darkBg = Color(0xFF0F0A1E);
-  static const Color darkSurface = Color(0xFF1A1035);
-  static const Color darkCard = Color(0xFF241848);
-  static const Color darkBorder = Color(0xFF3D2B7A);
+  // Soft Dark theme
+  static const Color darkBg = Color(0xFF1E1E2E);
+  static const Color darkSurface = Color(0xFF2E2E3E);
+  static const Color darkCard = Color(0xFF3E3E4E);
+  static const Color darkBorder = Color(0xFF4E4E6E);
 
-  // Light theme
-  static const Color lightBg = Color(0xFFF5F0FF);
+  // Playful Light theme
+  static const Color lightBg = Color(0xFFF9F9FB);
   static const Color lightSurface = Color(0xFFFFFFFF);
-  static const Color lightCard = Color(0xFFEDE7FF);
-  static const Color lightBorder = Color(0xFFD1C4E9);
+  static const Color lightCard = Color(0xFFF0F1FF);
+  static const Color lightBorder = Color(0xFFE0E2FF);
 
   // Text
-  static const Color textLight = Color(0xFFF5F0FF);
-  static const Color textDark = Color(0xFF1A1035);
-  static const Color textMuted = Color(0xFF8B7BB0);
+  static const Color textLight = Color(0xFFF0F1FF);
+  static const Color textDark = Color(0xFF2D3436);
+  static const Color textMuted = Color(0xFF636E72);
 
   // Status
-  static const Color success = Color(0xFF4CAF50);
-  static const Color warning = Color(0xFFFF9800);
-  static const Color error = Color(0xFFE53935);
-  static const Color info = Color(0xFF2196F3);
+  static const Color success = Color(0xFF00B894);
+  static const Color warning = Color(0xFFFDCB6E);
+  static const Color error = Color(0xFFFF7675);
+  static const Color info = Color(0xFF0984E3);
 }
 
 class AppTheme {
@@ -90,46 +90,35 @@ class AppTheme {
       ),
       cardTheme: CardThemeData(
         color: AppColors.darkCard,
-        elevation: 8,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        shadowColor: AppColors.primary.withValues(alpha: 0.3),
+        elevation: 0,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           textStyle: GoogleFonts.fredoka(fontSize: 16, fontWeight: FontWeight.bold),
-          elevation: 4,
+          elevation: 0,
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppColors.darkCard,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.darkBorder),
+          borderRadius: BorderRadius.circular(20),
+          borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.darkBorder),
+          borderRadius: BorderRadius.circular(20),
+          borderSide: BorderSide.none,
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(20),
           borderSide: const BorderSide(color: AppColors.primary, width: 2),
         ),
         labelStyle: const TextStyle(color: AppColors.textMuted),
-      ),
-      dialogTheme: DialogThemeData(
-        backgroundColor: AppColors.darkSurface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      ),
-      snackBarTheme: SnackBarThemeData(
-        backgroundColor: AppColors.darkCard,
-        contentTextStyle: GoogleFonts.nunito(color: AppColors.textLight),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        behavior: SnackBarBehavior.floating,
       ),
       useMaterial3: true,
     );
@@ -157,34 +146,37 @@ class AppTheme {
         iconTheme: const IconThemeData(color: AppColors.textDark),
       ),
       cardTheme: CardThemeData(
-        color: AppColors.lightCard,
-        elevation: 4,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        color: AppColors.lightSurface,
+        elevation: 2,
+        shadowColor: AppColors.primary.withValues(alpha: 0.1),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           textStyle: GoogleFonts.fredoka(fontSize: 16, fontWeight: FontWeight.bold),
+          elevation: 0,
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppColors.lightSurface,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(20),
           borderSide: const BorderSide(color: AppColors.lightBorder),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(20),
           borderSide: const BorderSide(color: AppColors.lightBorder),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(20),
           borderSide: const BorderSide(color: AppColors.primary, width: 2),
         ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       ),
       useMaterial3: true,
     );

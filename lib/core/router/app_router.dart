@@ -113,7 +113,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           final extra = state.extra as Map<String, dynamic>?;
           return OnlineLobbyScreen(
             isHost: extra?['isHost'] as bool? ?? true,
-            joinCode: extra?['code'] as String?,
+            roomId: extra?['roomId'] as String?,
           );
         },
       ),

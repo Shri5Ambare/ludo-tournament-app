@@ -19,111 +19,136 @@ class SettingsScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.darkBg,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        title: Text('Settings',
-            style: GoogleFonts.fredoka(color: Colors.white, fontSize: 22)),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        centerTitle: true,
+        title: Text('SETTINGS',
+            style: GoogleFonts.fredoka(color: AppColors.textDark, fontSize: 20, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white),
+          icon: const Icon(Icons.arrow_back_ios_rounded, color: AppColors.textDark),
           onPressed: () => context.pop(),
         ),
       ),
       body: ListView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+        physics: const BouncingScrollPhysics(),
         children: [
-          const _SectionHeader(title: '🔊 Audio'),
+          const _SectionHeader(title: 'AUDIO & FEEDBACK'),
           _ToggleTile(
             icon: Icons.volume_up_rounded,
-            label: 'Sound Effects',
-            subtitle: 'Dice rolls, token moves, cuts',
+            label: 'SOUND EFFECTS',
+            subtitle: 'Action sounds and alerts',
             value: settings.soundEnabled,
             onChanged: (_) => ref.read(settingsProvider.notifier).toggleSound(),
-          ).animate(delay: 50.ms).fadeIn(),
+          ).animate(delay: 50.ms).fadeIn().slideX(begin: 0.1),
           _ToggleTile(
             icon: Icons.music_note_rounded,
-            label: 'Background Music',
-            subtitle: 'In-game music',
+            label: 'BACKGROUND MUSIC',
+            subtitle: 'Relaxing game music',
             value: settings.musicEnabled,
             onChanged: (_) => ref.read(settingsProvider.notifier).toggleMusic(),
-          ).animate(delay: 100.ms).fadeIn(),
+          ).animate(delay: 100.ms).fadeIn().slideX(begin: 0.1),
           _ToggleTile(
             icon: Icons.vibration_rounded,
-            label: 'Vibration',
-            subtitle: 'Haptic feedback',
+            label: 'VIBRATION',
+            subtitle: 'Haptic feedback on turns',
             value: settings.vibrationEnabled,
             onChanged: (_) => ref.read(settingsProvider.notifier).toggleVibration(),
-          ).animate(delay: 150.ms).fadeIn(),
+          ).animate(delay: 150.ms).fadeIn().slideX(begin: 0.1),
 
-          const SizedBox(height: 24),
-          const _SectionHeader(title: '🎨 Appearance'),
+          const SizedBox(height: 32),
+          const _SectionHeader(title: 'VISUALS'),
           _ToggleTile(
             icon: Icons.dark_mode_rounded,
-            label: 'Dark Mode',
-            subtitle: 'Toggle dark/light theme',
+            label: 'DARK MODE',
+            subtitle: 'Easier on the eyes',
             value: themeMode == ThemeMode.dark,
             onChanged: (_) => ref.read(themeModeProvider.notifier).toggle(),
-          ).animate(delay: 200.ms).fadeIn(),
+          ).animate(delay: 200.ms).fadeIn().slideX(begin: 0.1),
           const SizedBox(height: 16),
-          const BoardThemeSelector().animate(delay: 250.ms).fadeIn(),
-
-          const SizedBox(height: 24),
-          const _SectionHeader(title: '⏱️ Turn Timer'),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppColors.darkCard,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.darkBorder),
-            ),
-            child: Row(
-              children: [15, 30, 45].map((secs) {
-                final sel = settings.turnTimerSeconds == secs;
-                return Padding(
-                  padding: const EdgeInsets.only(right: 10),
-                  child: GestureDetector(
-                    onTap: () => ref.read(settingsProvider.notifier).setTurnTimer(secs),
-                    child: AnimatedContainer(
-                      duration: 200.ms,
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(10),
-                        color: sel ? AppColors.accent.withValues(alpha: 0.15) : AppColors.darkBg,
-                        border: Border.all(color: sel ? AppColors.accent : AppColors.darkBorder),
-                      ),
-                      child: Text('${secs}s',
-                          style: GoogleFonts.fredoka(
-                              fontSize: 16,
-                              color: sel ? AppColors.accent : Colors.white60)),
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
-          ).animate(delay: 300.ms).fadeIn(),
-
-          const SizedBox(height: 24),
-          const _SectionHeader(title: 'ℹ️ About'),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppColors.darkCard,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.darkBorder),
-            ),
-            child: const Column(
+          _buildCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _AboutRow(label: 'Version', value: '1.0.0'),
-                Divider(color: AppColors.darkBorder, height: 20),
-                _AboutRow(label: 'Developer', value: 'SSiT Nexus'),
-                Divider(color: AppColors.darkBorder, height: 20),
-                _AboutRow(label: 'Website', value: 'ssitnexus.com'),
-                Divider(color: AppColors.darkBorder, height: 20),
-                _AboutRow(label: 'Framework', value: 'Flutter 3.x'),
+                Text('BOARD THEME', style: GoogleFonts.fredoka(fontSize: 14, color: AppColors.textDark, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+                const SizedBox(height: 16),
+                const BoardThemeSelector(),
               ],
             ),
-          ).animate(delay: 350.ms).fadeIn(),
+          ).animate(delay: 250.ms).fadeIn().slideX(begin: 0.1),
+
           const SizedBox(height: 32),
+          const _SectionHeader(title: 'GAMEPLAY'),
+          _buildCard(
+             child: Column(
+               crossAxisAlignment: CrossAxisAlignment.start,
+               children: [
+                 Text('TURN TIMER', style: GoogleFonts.fredoka(fontSize: 14, color: AppColors.textDark, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+                 const SizedBox(height: 16),
+                 Row(
+                   children: [15, 30, 45, 60].map((secs) {
+                     final sel = settings.turnTimerSeconds == secs;
+                     return Expanded(
+                       child: Padding(
+                         padding: const EdgeInsets.symmetric(horizontal: 4),
+                         child: GestureDetector(
+                           onTap: () => ref.read(settingsProvider.notifier).setTurnTimer(secs),
+                           child: AnimatedContainer(
+                             duration: 250.ms,
+                             padding: const EdgeInsets.symmetric(vertical: 14),
+                             decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(16),
+                                color: sel ? AppColors.primary : AppColors.lightBg,
+                                boxShadow: sel ? [BoxShadow(color: AppColors.primary.withValues(alpha: 0.2), blurRadius: 8, offset: const Offset(0, 4))] : [],
+                             ),
+                             child: Center(
+                               child: Text('${secs}s',
+                                   style: GoogleFonts.fredoka(
+                                       fontSize: 14,
+                                       color: sel ? Colors.white : AppColors.textDark.withValues(alpha: 0.4),
+                                       fontWeight: FontWeight.bold)),
+                             ),
+                           ),
+                         ),
+                       ),
+                     );
+                   }).toList(),
+                 ),
+               ],
+             ),
+          ).animate(delay: 300.ms).fadeIn().slideX(begin: 0.1),
+
+          const SizedBox(height: 32),
+          const _SectionHeader(title: 'ABOUT'),
+          _buildCard(
+            padding: EdgeInsets.zero,
+            child: const Column(
+              children: [
+                _AboutRow(label: 'VERSION', value: '2.0.0 PREMIUM'),
+                Divider(height: 1, indent: 20, endIndent: 20, color: Color(0xFFF0F0F0)),
+                _AboutRow(label: 'DEVELOPER', value: 'SSIT NEXUS'),
+                Divider(height: 1, indent: 20, endIndent: 20, color: Color(0xFFF0F0F0)),
+                _AboutRow(label: 'WEBSITE', value: 'SSITNEXUS.COM'),
+              ],
+            ),
+          ).animate(delay: 350.ms).fadeIn().slideX(begin: 0.1),
+          const SizedBox(height: 48),
         ],
       ),
+    );
+  }
+
+  Widget _buildCard({required Widget child, EdgeInsets padding = const EdgeInsets.all(24)}) {
+    return Container(
+      padding: padding,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(32),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 15, offset: const Offset(0, 6)),
+        ],
+      ),
+      child: child,
     );
   }
 }
@@ -133,10 +158,10 @@ class _SectionHeader extends StatelessWidget {
   const _SectionHeader({required this.title});
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.only(left: 4, bottom: 12),
         child: Text(title,
             style: GoogleFonts.fredoka(
-                fontSize: 17, color: Colors.white, fontWeight: FontWeight.bold)),
+                fontSize: 12, color: AppColors.textDark.withValues(alpha: 0.4), fontWeight: FontWeight.bold, letterSpacing: 1.5)),
       );
 }
 
@@ -149,20 +174,29 @@ class _ToggleTile extends StatelessWidget {
   const _ToggleTile({required this.icon, required this.label, required this.subtitle, required this.value, required this.onChanged});
   @override
   Widget build(BuildContext context) => Container(
-        margin: const EdgeInsets.only(bottom: 10),
+        margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
-          color: AppColors.darkCard,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.darkBorder),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(32),
+          boxShadow: [
+            BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 15, offset: const Offset(0, 6)),
+          ],
         ),
         child: SwitchListTile(
-          secondary: Icon(icon, color: value ? AppColors.primary : AppColors.textMuted),
-          title: Text(label, style: GoogleFonts.fredoka(fontSize: 15, color: Colors.white)),
-          subtitle: Text(subtitle, style: GoogleFonts.nunito(fontSize: 11, color: AppColors.textMuted)),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+          secondary: Container(
+            width: 48, height: 48,
+            decoration: BoxDecoration(color: (value ? AppColors.primary : AppColors.textDark).withValues(alpha: 0.05), borderRadius: BorderRadius.circular(16)),
+            child: Icon(icon, color: value ? AppColors.primary : AppColors.textDark.withValues(alpha: 0.3), size: 24),
+          ),
+          title: Text(label, style: GoogleFonts.fredoka(fontSize: 16, color: AppColors.textDark, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+          subtitle: Text(subtitle, style: GoogleFonts.nunito(fontSize: 12, color: AppColors.textDark.withValues(alpha: 0.4), fontWeight: FontWeight.bold)),
           value: value,
           onChanged: onChanged,
+          activeTrackColor: AppColors.primary.withValues(alpha: 0.2),
           activeThumbColor: AppColors.primary,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          inactiveTrackColor: AppColors.lightBg,
+          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
         ),
       );
 }
@@ -172,11 +206,14 @@ class _AboutRow extends StatelessWidget {
   final String value;
   const _AboutRow({required this.label, required this.value});
   @override
-  Widget build(BuildContext context) => Row(
-        children: [
-          Text(label, style: GoogleFonts.nunito(fontSize: 13, color: AppColors.textMuted)),
-          const Spacer(),
-          Text(value, style: GoogleFonts.nunito(fontSize: 13, color: Colors.white, fontWeight: FontWeight.bold)),
-        ],
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+        child: Row(
+          children: [
+            Text(label, style: GoogleFonts.fredoka(fontSize: 13, color: AppColors.textDark.withValues(alpha: 0.4), fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+            const Spacer(),
+            Text(value, style: GoogleFonts.fredoka(fontSize: 14, color: AppColors.textDark, fontWeight: FontWeight.bold)),
+          ],
+        ),
       );
 }

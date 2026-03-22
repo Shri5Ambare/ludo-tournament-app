@@ -12,49 +12,91 @@ class GameEngine {
 
   static int rollDice() => _random.nextInt(6) + 1;
 
-  // ── Quick mode: dice cap at 4 for faster games ─────────────────────────────
-
   static int rollDiceForMode(String gameMode) {
-    final value = rollDice();
-    // Quick mode: tokens need only 28 steps to home (not 57)
-    return value;
+    return rollDice(); // Quick mode still uses 1-6
   }
 
   // ── Movable tokens ─────────────────────────────────────────────────────────
 
-  static List<int> getMovableTokens(Player player, int diceValue,
-      {String gameMode = GameMode.classic}) {
+  static List<int> getMovableTokens(GameState state, Player player, int diceValue) {
+    final rules = state.customRules;
     final movable = <int>[];
-    final maxPos = gameMode == GameMode.quick ? 28 : 57;
+    final maxPos = state.gameMode == GameMode.quick ? 28 : 57;
+    final homeColumnStart = state.gameMode == GameMode.quick ? 23 : 52;
+    
+    // Track potential cut moves for "mustCutIfCuttable" rule
+    final cutMoves = <int>[];
 
     for (final token in player.tokens) {
       if (token.isFinished) continue;
 
       if (token.isAtHome) {
-        if (diceValue == 6) movable.add(token.id);
+        if (diceValue == 1 || (diceValue == 6 && rules.sixBringsCoinOut)) {
+          movable.add(token.id);
+        }
       } else {
         final newPos = token.position + diceValue;
-        if (newPos <= maxPos) movable.add(token.id);
+        
+        // Check if moving past max
+        if (newPos > maxPos) continue;
+        
+        // "Must cut to enter home lane" rule
+        if (rules.mustCutToEnterHomeLane && !player.hasCut && newPos >= homeColumnStart) {
+          continue; // Blocked from entering home lane!
+        }
+
+        // Check for cut
+        if (rules.mustCutIfCuttable && newPos < homeColumnStart) {
+          final movingAbsPos = (newPos + BoardPaths.playerStartIndex[player.index]) % 52;
+          bool canCut = false;
+          
+          if (!rules.safeZonesEnabled || !BoardPaths.safePositions.contains(movingAbsPos)) {
+            // Check opponents
+            for (int i = 0; i < state.players.length; i++) {
+              if (i == player.index) continue;
+              final opp = state.players[i];
+              for (final t in opp.tokens) {
+                if (t.isAtHome || t.isFinished || t.position >= homeColumnStart) continue;
+                if (t.state == TokenState.safe) continue;
+                
+                final oppAbsPos = (t.position + BoardPaths.playerStartIndex[i]) % 52;
+                if (oppAbsPos == movingAbsPos) {
+                  canCut = true;
+                  break;
+                }
+              }
+              if (canCut) break;
+            }
+          }
+          if (canCut) cutMoves.add(token.id);
+        }
+
+        movable.add(token.id);
       }
     }
+
+    // Enforce "mustCutIfCuttable"
+    if (rules.mustCutIfCuttable && cutMoves.isNotEmpty) {
+      return cutMoves;
+    }
+
     return movable;
   }
 
   // ── Move token ─────────────────────────────────────────────────────────────
 
   static GameState moveToken(GameState state, int tokenId) {
-    final currentPlayer = state.currentPlayer;
-    final tokenIndex =
-        currentPlayer.tokens.indexWhere((t) => t.id == tokenId);
+    var currentPlayer = state.currentPlayer;
+    final tokenIndex = currentPlayer.tokens.indexWhere((t) => t.id == tokenId);
     if (tokenIndex == -1) return state;
 
     final token = currentPlayer.tokens[tokenIndex];
     List<Player> players = List.from(state.players);
     List<String> log = List.from(state.eventLog);
+    final rules = state.customRules;
 
     final maxPos = state.gameMode == GameMode.quick ? 28 : 57;
-    final homeColumnStart =
-        state.gameMode == GameMode.quick ? 23 : 52;
+    final homeColumnStart = state.gameMode == GameMode.quick ? 23 : 52;
 
     int newPosition;
     TokenState newState;
@@ -67,20 +109,17 @@ class GameEngine {
       newPosition = token.position + state.diceValue;
 
       if (newPosition >= maxPos) {
-        // Exactly reached or overshot center — only move if exact
         if (newPosition == maxPos) {
           newState = TokenState.finished;
-          newPosition = 58; // sentinel for center
+          newPosition = 58; 
           log.add('${currentPlayer.name}\'s token reached HOME! 🏠🎉');
         } else {
-          // Overshoot — shouldn't happen (filtered in getMovableTokens) 
-          return state;
+          return state; // Overshoot
         }
       } else if (newPosition >= homeColumnStart) {
         newState = TokenState.safe;
         log.add('${currentPlayer.name} entered home column.');
-      } else if (BoardPaths.isSafePosition(
-          currentPlayer.index, newPosition)) {
+      } else if (rules.safeZonesEnabled && BoardPaths.isSafePosition(currentPlayer.index, newPosition)) {
         newState = TokenState.safe;
         log.add('${currentPlayer.name} is on a safe star ⭐');
       } else {
@@ -88,55 +127,74 @@ class GameEngine {
       }
     }
 
-    final updatedToken =
-        token.copyWith(state: newState, position: newPosition);
-    final updatedTokens = List<Token>.from(currentPlayer.tokens);
+    var updatedToken = token.copyWith(state: newState, position: newPosition);
+    var updatedTokens = List<Token>.from(currentPlayer.tokens);
     updatedTokens[tokenIndex] = updatedToken;
 
-    // Cuts — only on main path, non-safe
-    if (newState == TokenState.active &&
-        newPosition < homeColumnStart) {
+    bool cutHappened = false;
+    if (newState == TokenState.active && newPosition < homeColumnStart) {
+      final oldPlayers = List<Player>.from(players);
       players = _applyCuts(
         players: players,
         movingPlayerIndex: currentPlayer.index,
         newPosition: newPosition,
         log: log,
+        rules: rules,
       );
+      cutHappened = players.any((p) {
+        if (p.index == currentPlayer.index) return false;
+        final oldP = oldPlayers[p.index];
+        return p.tokens.where((t) => t.isAtHome).length >
+               oldP.tokens.where((t) => t.isAtHome).length;
+      });
     }
 
-    final updatedPlayer = currentPlayer.copyWith(tokens: updatedTokens);
+    // Update hasCut flag
+    final hasCutNow = currentPlayer.hasCut || cutHappened;
+
+    var updatedPlayer = currentPlayer.copyWith(tokens: updatedTokens, hasCut: hasCutNow);
     players[currentPlayer.index] = updatedPlayer;
+    currentPlayer = updatedPlayer;
 
     // Rank assignment
     final hasWon = updatedTokens.every((t) => t.isFinished);
     int? winnerId;
     if (hasWon) {
       final rank = players.where((p) => p.rank > 0).length + 1;
-      players[currentPlayer.index] = updatedPlayer.copyWith(rank: rank);
+      updatedPlayer = updatedPlayer.copyWith(rank: rank);
+      players[currentPlayer.index] = updatedPlayer;
       log.add('🏆 ${currentPlayer.name} finished #$rank!');
       if (rank == 1) winnerId = currentPlayer.index;
     }
 
-    // Extra turn on 6 (unless just won)
-    final bool extraTurn = state.diceValue == 6 && !hasWon;
-    final int consSixes =
-        extraTurn ? state.consecutiveSixes + 1 : 0;
+    // Extra turn rules
+    bool extraTurn = false;
+    if (state.diceValue == 6 && rules.sixGivesExtraTurn) extraTurn = true;
+    if (cutHappened && rules.cutGrantsExtraTurn) extraTurn = true;
+    if (newState == TokenState.finished && rules.homeGrantsExtraTurn) extraTurn = true;
+    
+    // Avoid infinite play if won
+    if (hasWon) extraTurn = false;
+    
+    final int consSixes = (state.diceValue == 6 && extraTurn) ? state.consecutiveSixes + 1 : 0;
 
-    // 3 sixes in a row → forfeit
+    // Handle 3 sixes
     if (consSixes >= 3) {
-      log.add('${currentPlayer.name} rolled 3 sixes — turn forfeited!');
-      return state.copyWith(
-        players: players,
-        currentPlayerIndex:
-            _nextActivePlayer(players, currentPlayer.index),
-        diceValue: 0,
-        hasRolled: false,
-        phase: _isGameOver(players) ? GamePhase.finished : GamePhase.rolling,
-        movableTokenIds: [],
-        consecutiveSixes: 0,
-        eventLog: _trimLog(log),
-        winnerId: winnerId,
-      );
+      if (rules.tripleSixBringsCoinOut) {
+         log.add('${currentPlayer.name} rolled 3 sixes! Brining one token out automatically.');
+         final homeIndexes = updatedTokens.where((t) => t.isAtHome).map((t) => t.id).toList();
+         if (homeIndexes.isNotEmpty) {
+           updatedTokens[homeIndexes.first] = updatedTokens[homeIndexes.first].copyWith(
+             state: TokenState.active, position: 0
+           );
+           players[currentPlayer.index] = updatedPlayer.copyWith(tokens: updatedTokens);
+         }
+      }
+      
+      if (rules.tripleSixForfeit) {
+        log.add('${currentPlayer.name} rolled 3 sixes — turn forfeited! 🚫');
+        extraTurn = false;
+      }
     }
 
     if (extraTurn) {
@@ -148,6 +206,7 @@ class GameEngine {
         phase: GamePhase.rolling,
         movableTokenIds: [],
         consecutiveSixes: consSixes,
+        consecutiveOnes: 0,
         eventLog: _trimLog(log),
         winnerId: winnerId,
       );
@@ -155,13 +214,13 @@ class GameEngine {
 
     return state.copyWith(
       players: players,
-      currentPlayerIndex:
-          _nextActivePlayer(players, currentPlayer.index),
+      currentPlayerIndex: _nextActivePlayer(players, currentPlayer.index),
       diceValue: 0,
       hasRolled: false,
       phase: _isGameOver(players) ? GamePhase.finished : GamePhase.rolling,
       movableTokenIds: [],
       consecutiveSixes: 0,
+      consecutiveOnes: 0,
       eventLog: _trimLog(log),
       winnerId: winnerId,
     );
@@ -171,49 +230,89 @@ class GameEngine {
 
   static GameState applyDiceRoll(GameState state, int diceValue) {
     final player = state.currentPlayer;
-    final movable = getMovableTokens(player, diceValue,
-        gameMode: state.gameMode);
+    final rules = state.customRules;
     List<String> log = List.from(state.eventLog);
     log.add('${player.name} rolled a $diceValue');
 
+    final int consOnes = (diceValue == 1) ? state.consecutiveOnes + 1 : 0;
+    final int consSixes = (diceValue == 6) ? state.consecutiveSixes + 1 : 0;
+    
+    List<Player> players = List.from(state.players);
+
+    // Rule: 3 consecutive 1s
+    if (consOnes >= 3) {
+      bool skipTurn = false;
+      
+      if (rules.tripleOneKillsOwn) {
+        log.add('💀 ${player.name} rolled 3 ones! Own furthest token is killed.');
+        // Kill furthest active token
+        final activeTokens = player.activeTokens;
+        if (activeTokens.isNotEmpty) {
+           activeTokens.sort((a, b) => b.position.compareTo(a.position));
+           final furthest = activeTokens.first;
+           final updatedTokens = List<Token>.from(player.tokens);
+           final idx = updatedTokens.indexWhere((t) => t.id == furthest.id);
+           updatedTokens[idx] = furthest.copyWith(state: TokenState.home, position: -1);
+           players[player.index] = player.copyWith(tokens: updatedTokens);
+        }
+      }
+      
+      if (rules.tripleOneSkipsTurn) skipTurn = true;
+      
+      if (skipTurn) {
+        log.add('${player.name}\'s turn skipped due to 3 ones! 🚫');
+        return state.copyWith(
+          players: players,
+          diceValue: 0, // Reset
+          hasRolled: false,
+          currentPlayerIndex: _nextActivePlayer(players, player.index),
+          phase: GamePhase.rolling,
+          movableTokenIds: [],
+          consecutiveOnes: 0,
+          consecutiveSixes: 0,
+          eventLog: _trimLog(log),
+        );
+      }
+    }
+
+    final sWithDice = state.copyWith(
+      players: players,
+      diceValue: diceValue, 
+      consecutiveOnes: consOnes,
+      consecutiveSixes: consSixes,
+      eventLog: _trimLog(log)
+    );
+
+    final movable = getMovableTokens(sWithDice, players[player.index], diceValue);
+
     if (movable.isEmpty) {
-      // No moves: skip turn (but 6 with all tokens home = skip too)
       log.add('${player.name} has no moves — skipped.');
-      final next = _nextActivePlayer(state.players, player.index);
-      // Reset timer too
-      final s = state.copyWith(
-        diceValue: diceValue,
+      final next = _nextActivePlayer(players, player.index);
+      final s = sWithDice.copyWith(
         hasRolled: true,
         currentPlayerIndex: next,
         phase: GamePhase.rolling,
         movableTokenIds: [],
         consecutiveSixes: 0,
-        eventLog: _trimLog(log),
+        consecutiveOnes: 0, 
       );
-      return s.copyWith(diceValue: 0, hasRolled: false,
-          remainingTurnSeconds: s.turnTimeSeconds);
+      return s.copyWith(diceValue: 0, hasRolled: false, remainingTurnSeconds: s.turnTimeSeconds);
     }
 
     // Auto-move if only one token can move
     if (movable.length == 1) {
-      final afterRoll = state.copyWith(
-        diceValue: diceValue,
+      final afterRoll = sWithDice.copyWith(
         hasRolled: true,
         phase: GamePhase.moving,
         movableTokenIds: movable,
-        consecutiveSixes: state.consecutiveSixes,
-        eventLog: _trimLog(log),
       );
       return moveToken(afterRoll, movable.first);
     }
 
-    return state.copyWith(
-      diceValue: diceValue,
+    return sWithDice.copyWith(
       hasRolled: true,
       phase: GamePhase.moving,
       movableTokenIds: movable,
-      consecutiveSixes: state.consecutiveSixes,
-      eventLog: _trimLog(log),
     );
   }
 
@@ -224,26 +323,23 @@ class GameEngine {
     required int movingPlayerIndex,
     required int newPosition,
     required List<String> log,
+    required CustomRules rules,
   }) {
     final updated = List<Player>.from(players);
-    final movingAbsPos =
-        (newPosition + BoardPaths.playerStartIndex[movingPlayerIndex]) % 52;
+    final movingAbsPos = (newPosition + BoardPaths.playerStartIndex[movingPlayerIndex]) % 52;
 
-    // Skip if this is a safe position
-    if (BoardPaths.safePositions.contains(movingAbsPos)) return players;
+    if (rules.safeZonesEnabled && BoardPaths.safePositions.contains(movingAbsPos)) return players;
 
     for (int i = 0; i < players.length; i++) {
       if (i == movingPlayerIndex) continue;
       final opponent = players[i];
       final newTokens = opponent.tokens.map((t) {
         if (t.isAtHome || t.isFinished || t.position > 51) return t;
-        if (t.state == TokenState.safe) return t; // safe tokens immune
+        if (t.state == TokenState.safe) return t; 
 
-        final oppAbsPos =
-            (t.position + BoardPaths.playerStartIndex[i]) % 52;
+        final oppAbsPos = (t.position + BoardPaths.playerStartIndex[i]) % 52;
         if (oppAbsPos == movingAbsPos) {
-          log.add(
-              '✂️ ${players[movingPlayerIndex].name} cut ${opponent.name}\'s token! Back to home.');
+          log.add('✂️ ${players[movingPlayerIndex].name} cut ${opponent.name}\'s token!');
           return t.copyWith(state: TokenState.home, position: -1);
         }
         return t;
@@ -269,7 +365,6 @@ class GameEngine {
     return players.where((p) => !p.hasWon).length <= 1;
   }
 
-  // Keep log size bounded so widget rebuilds stay fast
   static List<String> _trimLog(List<String> log) {
     if (log.length > 30) return log.sublist(log.length - 30);
     return log;
@@ -281,6 +376,7 @@ class GameEngine {
     required List<Map<String, dynamic>> playerConfigs,
     String gameMode = GameMode.classic,
     int turnTimerSeconds = AppConstants.defaultTurnSeconds,
+    CustomRules customRules = const CustomRules(),
   }) {
     final players = playerConfigs.asMap().entries.map((e) {
       final i = e.key;
@@ -289,12 +385,12 @@ class GameEngine {
         index: i,
         name: cfg['name'] as String? ?? BoardPaths.playerColorNames[i],
         type: cfg['type'] as PlayerType? ?? PlayerType.human,
-        aiDifficulty:
-            cfg['difficulty'] as String? ?? AIDifficulty.medium,
+        aiDifficulty: cfg['difficulty'] as String? ?? AIDifficulty.medium,
         tokens: List.generate(
             AppConstants.tokensPerPlayer,
             (j) => Token(id: j, playerIndex: i)),
         avatarEmoji: cfg['avatar'] as String? ?? '🎮',
+        hasCut: false,
       );
     }).toList();
 
@@ -304,6 +400,9 @@ class GameEngine {
       gameMode: gameMode,
       turnTimeSeconds: turnTimerSeconds,
       remainingTurnSeconds: turnTimerSeconds,
+      customRules: customRules,
+      consecutiveOnes: 0,
+      consecutiveSixes: 0, 
     );
   }
 }

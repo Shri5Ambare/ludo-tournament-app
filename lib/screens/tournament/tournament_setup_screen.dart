@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/tournament_model.dart';
+import '../../models/game_models.dart';
 import '../../providers/tournament_provider.dart';
 
 class TournamentSetupScreen extends ConsumerStatefulWidget {
@@ -23,6 +24,7 @@ class _TournamentSetupScreenState extends ConsumerState<TournamentSetupScreen> {
   TournamentType _type = TournamentType.offline;
   String _gameMode = GameMode.classic;
   int _turnTimer = AppConstants.defaultTurnSeconds;
+  CustomRules _customRules = const CustomRules();
 
   int get playerCount => _playerControllers.length;
 
@@ -64,147 +66,210 @@ class _TournamentSetupScreenState extends ConsumerState<TournamentSetupScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.darkBg,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
-        title: Text('Tournament Setup',
-            style: GoogleFonts.fredoka(color: Colors.white, fontSize: 20)),
+        elevation: 0,
+        centerTitle: true,
+        title: Text('TOURNAMENT SETUP',
+            style: GoogleFonts.fredoka(color: Theme.of(context).textTheme.bodyLarge?.color, fontSize: 20, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white),
+          icon: Icon(Icons.arrow_back_ios_rounded, color: Theme.of(context).iconTheme.color),
           onPressed: () => context.pop(),
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header info
-            _infoCard(),
-            const SizedBox(height: 20),
-
-            // Tournament name
-            _sectionTitle('Tournament Name'),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _nameController,
-              style: GoogleFonts.nunito(color: Colors.white),
-              decoration: InputDecoration(
-                hintText: 'Enter tournament name...',
-                hintStyle: const TextStyle(color: Colors.white38),
-                filled: true,
-                fillColor: AppColors.darkCard,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.darkBorder),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.darkBorder),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.primary, width: 2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // Player count
-            _sectionTitle('Players ($playerCount/${AppConstants.maxTournamentPlayers})'),
-            const SizedBox(height: 8),
-            _playerCountControl(),
-            const SizedBox(height: 12),
-            _groupPreview(),
-            const SizedBox(height: 16),
-            _playersList(),
-            const SizedBox(height: 20),
-
-            // Tournament type
-            _sectionTitle('Mode'),
-            const SizedBox(height: 8),
-            _typeSelector(),
-            const SizedBox(height: 20),
-
-            // Game settings
-            _sectionTitle('Game Mode'),
-            const SizedBox(height: 8),
-            _gameModeSelector(),
-            const SizedBox(height: 20),
-
-            // Timer
-            _sectionTitle('Turn Timer'),
-            const SizedBox(height: 8),
-            _timerSelector(),
-            const SizedBox(height: 32),
-
-            // Start button
-            _startButton(),
-            const SizedBox(height: 32),
-          ],
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: _startButton(),
         ),
       ),
+      body: Stack(
+        children: [
+          Positioned(
+            top: -50, left: -50,
+            child: Container(width: 200, height: 200, decoration: BoxDecoration(color: AppColors.accent.withValues(alpha: 0.05), shape: BoxShape.circle)),
+          ),
+          SafeArea(
+            bottom: false,
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
+              child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _infoCard(),
+                const SizedBox(height: 32),
+                
+                _buildCardSection(
+                  title: 'BASIC INFO',
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                       Text('TOURNAMENT NAME', style: GoogleFonts.fredoka(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.textDark.withValues(alpha: 0.4), letterSpacing: 1)),
+                       const SizedBox(height: 12),
+                       TextField(
+                         controller: _nameController,
+                         style: GoogleFonts.fredoka(color: AppColors.textDark, fontWeight: FontWeight.bold, fontSize: 16),
+                         decoration: InputDecoration(
+                           hintText: 'Enter name...',
+                           filled: true,
+                           fillColor: AppColors.lightBg,
+                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide.none),
+                           contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                         ),
+                       ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                _buildCardSection(
+                  title: 'PARTICIPANTS',
+                  child: Column(
+                    children: [
+                      _playerCountControl(),
+                      const SizedBox(height: 24),
+                      _groupPreview(),
+                      const SizedBox(height: 24),
+                      _playersList(),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                _buildCardSection(
+                  title: 'TOURNAMENT MODE',
+                  child: _typeSelector(),
+                ),
+                const SizedBox(height: 24),
+
+                _buildCardSection(
+                  title: 'GAME SETTINGS',
+                  child: Column(
+                    children: [
+                      _gameModeSelector(),
+                      const SizedBox(height: 24),
+                       Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text('TURN TIMER', style: GoogleFonts.fredoka(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.textDark.withValues(alpha: 0.4), letterSpacing: 1)),
+                      ),
+                      const SizedBox(height: 12),
+                      _timerSelector(),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                const SizedBox(height: 24),
+                _buildCardSection(
+                  title: 'HOUSE RULES',
+                  child: Theme(
+                    data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+                    child: ExpansionTile(
+                      title: Text('Configure 11 Custom Rules', style: GoogleFonts.nunito(fontWeight: FontWeight.bold, color: Theme.of(context).textTheme.bodyLarge?.color)),
+                      childrenPadding: EdgeInsets.zero,
+                      tilePadding: EdgeInsets.zero,
+                      children: [
+                        _buildHouseRules(),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+              ],
+            ),
+          ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCardSection({required String title, required Widget child}) {
+    final textColor = Theme.of(context).textTheme.bodyLarge?.color ?? AppColors.textDark;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 8, bottom: 12),
+          child: Text(title,
+              style: GoogleFonts.fredoka(
+                  fontSize: 13, color: textColor.withValues(alpha: 0.4), fontWeight: FontWeight.bold, letterSpacing: 1.5)),
+        ),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            borderRadius: BorderRadius.circular(32),
+            boxShadow: [
+              BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 15, offset: const Offset(0, 6)),
+            ],
+          ),
+          child: child,
+        ),
+      ],
     );
   }
 
   Widget _infoCard() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        gradient: LinearGradient(
-          colors: [AppColors.primary.withValues(alpha: 0.3), AppColors.primaryDark.withValues(alpha: 0.2)],
+        borderRadius: BorderRadius.circular(32),
+        gradient: const LinearGradient(
+          colors: [AppColors.primary, Color(0xFF7B85FF)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
-        border: Border.all(color: AppColors.primary.withValues(alpha: 0.5)),
+        boxShadow: [
+          BoxShadow(color: AppColors.primary.withValues(alpha: 0.3), blurRadius: 20, offset: const Offset(0, 8)),
+        ],
       ),
       child: Row(
         children: [
-          const Text('🏆', style: TextStyle(fontSize: 32)),
-          const SizedBox(width: 12),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(20)),
+            child: const Text('🏆', style: TextStyle(fontSize: 32)),
+          ),
+          const SizedBox(width: 20),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Tournament Mode',
+                Text('CHAMPIONSHIP',
                     style: GoogleFonts.fredoka(
-                        fontSize: 16, color: Colors.white, fontWeight: FontWeight.bold)),
-                Text('5–16 players • Group stages • Finals bracket\nBots fill empty slots automatically',
-                    style: GoogleFonts.nunito(fontSize: 12, color: Colors.white70)),
+                        fontSize: 22, color: Colors.white, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                const SizedBox(height: 6),
+                Text('5–16 players • Multiple Groups • Final Bracket',
+                    style: GoogleFonts.fredoka(fontSize: 11, color: Colors.white.withValues(alpha: 0.8), fontWeight: FontWeight.bold, letterSpacing: 0.5)),
               ],
             ),
           ),
         ],
       ),
-    ).animate().fadeIn().slideY(begin: -0.2);
-  }
-
-  Widget _sectionTitle(String t) {
-    return Text(t,
-        style: GoogleFonts.fredoka(
-            fontSize: 17, color: Colors.white, fontWeight: FontWeight.bold));
+    ).animate().fadeIn().scale(delay: 100.ms, curve: Curves.easeOutBack);
   }
 
   Widget _playerCountControl() {
     return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
         _circleBtn(Icons.remove, _removePlayer,
             enabled: playerCount > AppConstants.minTournamentPlayers),
-        const SizedBox(width: 16),
-        Container(
-          width: 60,
-          height: 48,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            color: AppColors.darkCard,
-            border: Border.all(color: AppColors.primary),
-          ),
-          child: Center(
-            child: Text('$playerCount',
+        const SizedBox(width: 32),
+        Column(
+          children: [
+            Text('$playerCount',
                 style: GoogleFonts.fredoka(
-                    fontSize: 24, color: Colors.white, fontWeight: FontWeight.bold)),
-          ),
+                    fontSize: 48, color: Theme.of(context).textTheme.bodyLarge?.color, fontWeight: FontWeight.bold)),
+            Text('PARTICIPANTS', style: GoogleFonts.fredoka(fontSize: 10, color: Theme.of(context).textTheme.bodyLarge?.color?.withValues(alpha: 0.4), fontWeight: FontWeight.bold, letterSpacing: 2)),
+          ],
         ),
-        const SizedBox(width: 16),
+        const SizedBox(width: 32),
         _circleBtn(Icons.add, _addPlayer,
             enabled: playerCount < AppConstants.maxTournamentPlayers),
       ],
@@ -215,51 +280,40 @@ class _TournamentSetupScreenState extends ConsumerState<TournamentSetupScreen> {
     return GestureDetector(
       onTap: enabled ? onTap : null,
       child: Container(
-        width: 44,
-        height: 44,
+        width: 56,
+        height: 56,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: enabled ? AppColors.primary.withValues(alpha: 0.2) : AppColors.darkCard,
-          border: Border.all(
-              color: enabled ? AppColors.primary : AppColors.darkBorder),
+          color: enabled ? AppColors.primary.withValues(alpha: 0.1) : Theme.of(context).scaffoldBackgroundColor,
+          border: Border.all(color: enabled ? AppColors.primary.withValues(alpha: 0.1) : Colors.transparent),
         ),
         child: Icon(icon,
-            color: enabled ? AppColors.primary : Colors.white24, size: 22),
+            color: enabled ? AppColors.primary : Theme.of(context).textTheme.bodyLarge?.color?.withValues(alpha: 0.2), size: 28),
       ),
     );
   }
 
   Widget _groupPreview() {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        color: AppColors.darkCard,
-        border: Border.all(color: AppColors.accent.withValues(alpha: 0.3)),
+        borderRadius: BorderRadius.circular(20),
+        color: AppColors.primary.withValues(alpha: 0.05),
       ),
       child: Row(
         children: [
-          const Text('📊', style: TextStyle(fontSize: 20)),
-          const SizedBox(width: 10),
+          const Icon(Icons.auto_awesome_mosaic_rounded, color: AppColors.primary, size: 20),
+          const SizedBox(width: 16),
           Expanded(
             child: RichText(
               text: TextSpan(
-                style: GoogleFonts.nunito(fontSize: 13, color: Colors.white70),
+                style: GoogleFonts.fredoka(fontSize: 14, color: Theme.of(context).textTheme.bodyLarge?.color?.withValues(alpha: 0.6), fontWeight: FontWeight.w500),
                 children: [
                   TextSpan(
-                    text: '$_groupCount group${_groupCount > 1 ? 's' : ''} ',
-                    style: GoogleFonts.fredoka(
-                        fontSize: 14, color: AppColors.accent),
+                    text: '$_groupCount GROUP${_groupCount > 1 ? 'S' : ''} ',
+                    style: GoogleFonts.fredoka(fontWeight: FontWeight.bold, color: AppColors.primary, letterSpacing: 0.5),
                   ),
-                  const TextSpan(
-                    text: 'of ${AppConstants.playersPerGroup} players. ',
-                  ),
-                  if (playerCount % AppConstants.playersPerGroup != 0)
-                    TextSpan(
-                      text: '${AppConstants.playersPerGroup - (playerCount % AppConstants.playersPerGroup)} bot(s) will be added to fill last group.',
-                      style: GoogleFonts.nunito(
-                          fontSize: 12, color: Colors.white38),
-                    ),
+                  const TextSpan(text: 'ARE SCHEDULED'),
                 ],
               ),
             ),
@@ -273,60 +327,64 @@ class _TournamentSetupScreenState extends ConsumerState<TournamentSetupScreen> {
     return Column(
       children: List.generate(_playerControllers.length, (i) {
         return Container(
-          margin: const EdgeInsets.only(bottom: 8),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            color: AppColors.darkCard,
-            border: Border.all(color: AppColors.darkBorder),
+            borderRadius: BorderRadius.circular(20),
+            color: Theme.of(context).scaffoldBackgroundColor,
           ),
           child: Row(
             children: [
               Container(
-                width: 28,
-                height: 28,
+                width: 40,
+                height: 40,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: AppColors.primary.withValues(alpha: 0.2),
-                  border: Border.all(color: AppColors.primary.withValues(alpha: 0.5)),
+                  color: Colors.white,
+                  boxShadow: [
+                    BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 4),
+                  ],
                 ),
                 child: Center(
                   child: Text('${i + 1}',
                       style: GoogleFonts.fredoka(
-                          fontSize: 13, color: AppColors.primaryLight)),
+                          fontSize: 16, color: AppColors.primary, fontWeight: FontWeight.bold)),
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 16),
               Expanded(
                 child: TextField(
                   controller: _playerControllers[i],
-                  style: GoogleFonts.nunito(color: Colors.white, fontSize: 14),
+                  style: GoogleFonts.fredoka(color: Theme.of(context).textTheme.bodyLarge?.color, fontSize: 16, fontWeight: FontWeight.bold),
                   decoration: InputDecoration(
-                    hintText: 'Player ${i + 1}',
-                    hintStyle: const TextStyle(color: Colors.white38, fontSize: 14),
+                    hintText: 'PLAYER ${i + 1}',
+                    hintStyle: GoogleFonts.fredoka(color: Theme.of(context).textTheme.bodyLarge?.color?.withValues(alpha: 0.2)),
                     border: InputBorder.none,
                     isDense: true,
                     contentPadding: EdgeInsets.zero,
                   ),
                 ),
               ),
-              Text(
-                'Group ${String.fromCharCode(65 + i ~/ AppConstants.playersPerGroup)}',
-                style: GoogleFonts.nunito(
-                    fontSize: 11, color: AppColors.textMuted),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(12)),
+                child: Text(
+                  'GROUP ${String.fromCharCode(65 + i ~/ AppConstants.playersPerGroup)}',
+                  style: GoogleFonts.fredoka(fontSize: 10, color: Theme.of(context).textTheme.bodyLarge?.color?.withValues(alpha: 0.4), fontWeight: FontWeight.bold, letterSpacing: 0.5),
+                ),
               ),
             ],
           ),
-        ).animate(delay: (i * 30).ms).slideX(begin: -0.1).fadeIn();
+        ).animate(delay: (i * 30).ms).slideX(begin: 0.1).fadeIn();
       }),
     );
   }
 
   Widget _typeSelector() {
     final types = [
-      (TournamentType.offline, '📱 Single Device', 'Pass & play'),
-      (TournamentType.hotspot, '📡 Hotspot LAN', 'Multiple devices'),
-      (TournamentType.online, '🌐 Online', 'Internet required'),
+      (TournamentType.offline, '📱 LOCAL DEVICE', 'Pass & play session'),
+      (TournamentType.hotspot, '📡 HOTSPOT LAN', 'Play with friends nearby'),
+      (TournamentType.online, '🌐 ONLINE LUDO', 'Play across the world'),
     ];
     return Column(
       children: types.map((t) {
@@ -334,31 +392,42 @@ class _TournamentSetupScreenState extends ConsumerState<TournamentSetupScreen> {
         return GestureDetector(
           onTap: () => setState(() => _type = t.$1),
           child: AnimatedContainer(
-            duration: 200.ms,
-            margin: const EdgeInsets.only(bottom: 8),
-            padding: const EdgeInsets.all(14),
+            duration: 250.ms,
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              color: sel ? AppColors.primary.withValues(alpha: 0.2) : AppColors.darkCard,
-              border: Border.all(
-                  color: sel ? AppColors.primary : AppColors.darkBorder,
-                  width: sel ? 2 : 1),
+              borderRadius: BorderRadius.circular(24),
+              color: sel ? AppColors.primary : Theme.of(context).scaffoldBackgroundColor,
+              boxShadow: sel ? [BoxShadow(color: AppColors.primary.withValues(alpha: 0.3), blurRadius: 10, offset: const Offset(0, 4))] : [],
             ),
             child: Row(
               children: [
-                Text(t.$2,
-                    style: GoogleFonts.fredoka(
-                        fontSize: 15,
-                        color: Colors.white,
-                        fontWeight: sel ? FontWeight.bold : FontWeight.normal)),
-                const Spacer(),
-                Text(t.$3,
-                    style: GoogleFonts.nunito(
-                        fontSize: 12, color: Colors.white54)),
-                if (sel) ...[
-                  const SizedBox(width: 8),
-                  const Icon(Icons.check_circle, color: AppColors.primary, size: 18),
-                ],
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(color: (sel ? Colors.white : Theme.of(context).textTheme.bodyLarge?.color ?? AppColors.textDark).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(16)),
+                  child: Text(t.$2.split(' ')[0], style: const TextStyle(fontSize: 24)),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(t.$2.substring(t.$2.indexOf(' ')+1),
+                          style: GoogleFonts.fredoka(
+                              fontSize: 16,
+                              color: sel ? Colors.white : Theme.of(context).textTheme.bodyLarge?.color,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.5)),
+                      Text(t.$3.toUpperCase(),
+                          style: GoogleFonts.fredoka(
+                              fontSize: 9, 
+                              color: sel ? Colors.white.withValues(alpha: 0.7) : Theme.of(context).textTheme.bodyLarge?.color?.withValues(alpha: 0.4),
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.5)),
+                    ],
+                  ),
+                ),
+                if (sel) const Icon(Icons.check_circle_rounded, color: Colors.white, size: 24),
               ],
             ),
           ),
@@ -369,29 +438,29 @@ class _TournamentSetupScreenState extends ConsumerState<TournamentSetupScreen> {
 
   Widget _gameModeSelector() {
     final modes = [
-      (GameMode.classic, '♟️ Classic'),
-      (GameMode.quick, '⚡ Quick'),
+      (GameMode.classic, '♟️ CLASSIC'),
+      (GameMode.quick, '⚡ QUICK'),
     ];
     return Row(
       children: modes.map((m) {
         final sel = _gameMode == m.$1;
-        return Padding(
-          padding: const EdgeInsets.only(right: 10),
-          child: GestureDetector(
-            onTap: () => setState(() => _gameMode = m.$1),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10),
-                color: sel ? AppColors.primary : AppColors.darkCard,
-                border: Border.all(
-                    color: sel ? AppColors.primary : AppColors.darkBorder),
+        return Expanded(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: GestureDetector(
+              onTap: () => setState(() => _gameMode = m.$1),
+              child: AnimatedContainer(
+                duration: 250.ms,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  color: sel ? AppColors.accent : Theme.of(context).scaffoldBackgroundColor,
+                  boxShadow: sel ? [BoxShadow(color: AppColors.accent.withValues(alpha: 0.2), blurRadius: 10, offset: const Offset(0, 4))] : [],
+                ),
+                child: Center(
+                  child: Text(m.$2, style: GoogleFonts.fredoka(fontSize: 14, color: sel ? Colors.white : Theme.of(context).textTheme.bodyLarge?.color, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                ),
               ),
-              child: Text(m.$2,
-                  style: GoogleFonts.nunito(
-                      fontSize: 13,
-                      color: Colors.white,
-                      fontWeight: sel ? FontWeight.bold : FontWeight.normal)),
             ),
           ),
         );
@@ -400,26 +469,31 @@ class _TournamentSetupScreenState extends ConsumerState<TournamentSetupScreen> {
   }
 
   Widget _timerSelector() {
-    final options = [15, 30, 45];
+    final options = [15, 30, 45, 60];
     return Row(
       children: options.map((t) {
         final sel = _turnTimer == t;
-        return Padding(
-          padding: const EdgeInsets.only(right: 10),
-          child: GestureDetector(
-            onTap: () => setState(() => _turnTimer = t),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10),
-                color: sel ? AppColors.accent.withValues(alpha: 0.15) : AppColors.darkCard,
-                border: Border.all(
-                    color: sel ? AppColors.accent : AppColors.darkBorder),
+        return Expanded(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: GestureDetector(
+              onTap: () => setState(() => _turnTimer = t),
+              child: AnimatedContainer(
+                duration: 250.ms,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  color: sel ? AppColors.primary : Theme.of(context).scaffoldBackgroundColor,
+                  boxShadow: sel ? [BoxShadow(color: AppColors.primary.withValues(alpha: 0.2), blurRadius: 8, offset: const Offset(0, 4))] : [],
+                ),
+                child: Center(
+                  child: Text('${t}S',
+                      style: GoogleFonts.fredoka(
+                          fontSize: 14,
+                          color: sel ? Colors.white : Theme.of(context).textTheme.bodyLarge?.color?.withValues(alpha: 0.4),
+                          fontWeight: FontWeight.bold)),
+                ),
               ),
-              child: Text('${t}s',
-                  style: GoogleFonts.fredoka(
-                      fontSize: 16,
-                      color: sel ? AppColors.accent : Colors.white70)),
             ),
           ),
         );
@@ -428,21 +502,72 @@ class _TournamentSetupScreenState extends ConsumerState<TournamentSetupScreen> {
   }
 
   Widget _startButton() {
-    return SizedBox(
+    return Container(
       width: double.infinity,
-      height: 58,
+      height: 64,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        gradient: const LinearGradient(colors: [AppColors.primary, Color(0xFF7B85FF)]),
+        boxShadow: [
+          BoxShadow(color: AppColors.primary.withValues(alpha: 0.3), blurRadius: 20, offset: const Offset(0, 8)),
+        ],
+      ),
       child: ElevatedButton(
         onPressed: _startTournament,
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          elevation: 8,
-          shadowColor: AppColors.primary.withValues(alpha: 0.5),
+          backgroundColor: Colors.transparent,
+          shadowColor: Colors.transparent,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         ),
-        child: Text('🏆 Start Tournament',
-            style: GoogleFonts.fredoka(fontSize: 20, color: Colors.white)),
+        child: Text('CREATE TOURNAMENT',
+            style: GoogleFonts.fredoka(fontSize: 16, color: Colors.white, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
       ),
-    ).animate().scale(curve: Curves.elasticOut, delay: 200.ms);
+    ).animate().scale(delay: 500.ms, curve: Curves.elasticOut);
+  }
+
+  Widget _buildHouseRules() {
+    return Column(
+      children: [
+        _ruleToggle('6 gives another turn', _customRules.sixGivesExtraTurn, (v) => setState(() => _customRules = _customRules.copyWith(sixGivesExtraTurn: v))),
+        _ruleToggle('6 brings a coin out', _customRules.sixBringsCoinOut, (v) => setState(() => _customRules = _customRules.copyWith(sixBringsCoinOut: v))),
+        _ruleToggle('Show safe cells (stars)', _customRules.safeZonesEnabled, (v) => setState(() => _customRules = _customRules.copyWith(safeZonesEnabled: v))),
+        _ruleToggle('3 consecutive 1s cuts one own coin', _customRules.tripleOneKillsOwn, (v) => setState(() => _customRules = _customRules.copyWith(tripleOneKillsOwn: v))),
+        _ruleToggle('Skip a turn on 3 consecutive 1s', _customRules.tripleOneSkipsTurn, (v) => setState(() => _customRules = _customRules.copyWith(tripleOneSkipsTurn: v))),
+        _ruleToggle('3 consecutive 6s brings a coin out', _customRules.tripleSixBringsCoinOut, (v) => setState(() => _customRules = _customRules.copyWith(tripleSixBringsCoinOut: v))),
+        _ruleToggle('3 consecutive 6s forfeits turn', _customRules.tripleSixForfeit, (v) => setState(() => _customRules = _customRules.copyWith(tripleSixForfeit: v))),
+        _ruleToggle('Gains another turn on cutting a coin', _customRules.cutGrantsExtraTurn, (v) => setState(() => _customRules = _customRules.copyWith(cutGrantsExtraTurn: v))),
+        _ruleToggle('Gains another turn on reaching home', _customRules.homeGrantsExtraTurn, (v) => setState(() => _customRules = _customRules.copyWith(homeGrantsExtraTurn: v))),
+        _ruleToggle('Must cut a coin to enter home lane', _customRules.mustCutToEnterHomeLane, (v) => setState(() => _customRules = _customRules.copyWith(mustCutToEnterHomeLane: v))),
+        _ruleToggle('Must cut opponent if possible', _customRules.mustCutIfCuttable, (v) => setState(() => _customRules = _customRules.copyWith(mustCutIfCuttable: v))),
+      ],
+    );
+  }
+
+  Widget _ruleToggle(String title, bool value, ValueChanged<bool> onChanged) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: Theme.of(context).scaffoldBackgroundColor,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(title.toUpperCase(), style: GoogleFonts.fredoka(fontSize: 14, color: Theme.of(context).textTheme.bodyLarge?.color, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+          ),
+          SizedBox(
+            height: 30, // constrain switch height
+            child: Switch(
+              value: value,
+              onChanged: onChanged,
+              activeTrackColor: AppColors.primary.withValues(alpha: 0.2),
+              activeThumbColor: AppColors.primary,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   void _startTournament() {
@@ -456,6 +581,7 @@ class _TournamentSetupScreenState extends ConsumerState<TournamentSetupScreen> {
       type: _type,
       gameMode: _gameMode,
       turnTimerSeconds: _turnTimer,
+      customRules: _customRules,
     );
 
     final tournament = ref.read(tournamentProvider);

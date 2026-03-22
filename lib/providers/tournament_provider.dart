@@ -2,6 +2,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 import '../models/tournament_model.dart';
+import '../models/game_models.dart';
 import '../core/constants/app_constants.dart';
 
 final tournamentProvider =
@@ -19,6 +20,7 @@ class TournamentNotifier extends StateNotifier<TournamentState?> {
     required TournamentType type,
     String gameMode = GameMode.classic,
     int turnTimerSeconds = AppConstants.defaultTurnSeconds,
+    CustomRules customRules = const CustomRules(),
   }) {
     final groups = TournamentState.buildGroups(playerNames);
     state = TournamentState(
@@ -28,6 +30,7 @@ class TournamentNotifier extends StateNotifier<TournamentState?> {
       type: type,
       gameMode: gameMode,
       turnTimerSeconds: turnTimerSeconds,
+      customRules: customRules,
       status: TournamentStatus.inProgress,
     );
   }
@@ -37,20 +40,27 @@ class TournamentNotifier extends StateNotifier<TournamentState?> {
     final current = state;
     if (current == null) return;
 
-    current.groups[groupIndex].winnerName = winnerName;
-    current.groups[groupIndex].isComplete = true;
-
+    final updatedGroups = List<TournamentGroup>.from(current.groups);
+    final group = updatedGroups[groupIndex];
+    updatedGroups[groupIndex] = TournamentGroup(
+      groupIndex: group.groupIndex,
+      players: group.players,
+      winnerName: winnerName,
+      isComplete: true,
+    );
+    
     // Check if all groups are done
-    if (current.isGroupStageComplete) {
+    if (updatedGroups.every((g) => g.isComplete)) {
       _startFinals();
     } else {
       state = TournamentState(
         id: current.id,
         name: current.name,
-        groups: current.groups,
+        groups: updatedGroups,
         type: current.type,
         gameMode: current.gameMode,
         turnTimerSeconds: current.turnTimerSeconds,
+        customRules: current.customRules,
         currentRound: current.currentRound,
         roundWinners: current.roundWinners,
         status: current.status,
@@ -74,6 +84,7 @@ class TournamentNotifier extends StateNotifier<TournamentState?> {
       type: current.type,
       gameMode: current.gameMode,
       turnTimerSeconds: current.turnTimerSeconds,
+      customRules: current.customRules,
       currentRound: 2,
       roundWinners: winners,
       status: TournamentStatus.inProgress,
@@ -92,6 +103,7 @@ class TournamentNotifier extends StateNotifier<TournamentState?> {
       type: current.type,
       gameMode: current.gameMode,
       turnTimerSeconds: current.turnTimerSeconds,
+      customRules: current.customRules,
       currentRound: current.currentRound,
       roundWinners: current.roundWinners,
       champion: TournamentPlayer(name: championName),

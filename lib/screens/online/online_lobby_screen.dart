@@ -1,583 +1,472 @@
 // lib/screens/online/online_lobby_screen.dart
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:ludo_tournament_app/core/constants/app_constants.dart';
 import '../../core/theme/app_theme.dart';
-import '../../core/constants/app_constants.dart';
 import '../../models/game_models.dart';
 import '../../providers/chat_provider.dart';
 import '../../services/supabase_service.dart';
 
 class OnlineLobbyScreen extends ConsumerStatefulWidget {
   final bool isHost;
-  final String? joinCode;
-  const OnlineLobbyScreen({super.key, required this.isHost, this.joinCode});
+  final String? roomId;
+
+  const OnlineLobbyScreen({super.key, required this.isHost, this.roomId});
 
   @override
   ConsumerState<OnlineLobbyScreen> createState() => _OnlineLobbyScreenState();
 }
 
 class _OnlineLobbyScreenState extends ConsumerState<OnlineLobbyScreen> {
-  final _codeController = TextEditingController();
   OnlineRoom? _room;
-  String _statusMsg = '';
-  bool _isLoading = false;
-  Timer? _pollTimer;
+  List<RoomPlayer> _players = [];
+  CustomRules _customRules = const CustomRules();
+  String _statusMessage = 'INITIALIZING...';
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (widget.isHost) {
-        _createRoom();
-      } else if (widget.joinCode != null) {
-        _codeController.text = widget.joinCode!;
-        _joinRoom();
+    _initLobby();
+  }
+
+  Future<void> _initLobby() async {
+    final supabase = ref.read(supabaseServiceProvider);
+
+    if (widget.isHost) {
+      try {
+        final room = await supabase.createRoom(
+          gameMode: GameMode.classic,
+          turnTimer: 30,
+          maxPlayers: 4,
+        );
+        if (mounted && room != null) {
+          setState(() {
+            _room = room;
+            _statusMessage = 'WAITING FOR PLAYERS...';
+            _isLoading = false;
+          });
+          _subscribeToRoom(room.id);
+        }
+      } catch (e) {
+        if (mounted) setState(() => _statusMessage = 'ERROR: $e');
       }
-    });
-  }
-
-  @override
-  void dispose() {
-    _codeController.dispose();
-    _pollTimer?.cancel();
-    super.dispose();
-  }
-
-  Future<void> _createRoom() async {
-    setState(() { _isLoading = true; _statusMsg = 'Creating room...'; });
-    final svc = ref.read(supabaseServiceProvider);
-    final room = await svc.createRoom(
-      gameMode: GameMode.classic,
-      turnTimer: 30,
-      maxPlayers: 4,
-    );
-    setState(() {
-      _isLoading = false;
-      _room = room;
-      _statusMsg = room != null
-          ? 'Share code with friends!'
-          : '❌ Failed to create room';
-    });
-  }
-
-  Future<void> _joinRoom() async {
-    final code = _codeController.text.trim().toUpperCase();
-    if (code.length != 6) {
-      setState(() => _statusMsg = '⚠️ Enter a 6-character room code');
-      return;
+    } else if (widget.roomId != null) {
+      try {
+        final room = await supabase.joinRoom(widget.roomId!);
+        if (mounted && room != null) {
+          setState(() {
+            _room = room;
+            _statusMessage = 'JOINED LOBBY';
+            _isLoading = false;
+          });
+          _subscribeToRoom(room.id);
+        }
+      } catch (e) {
+        if (mounted) setState(() => _statusMessage = 'FAILED TO JOIN: $e');
+      }
     }
-    setState(() { _isLoading = true; _statusMsg = 'Joining room $code...'; });
-    final svc = ref.read(supabaseServiceProvider);
-    final room = await svc.joinRoom(code);
-    setState(() {
-      _isLoading = false;
-      _room = room;
-      _statusMsg = room != null ? 'Joined! Waiting for host...' : '❌ Room not found';
-    });
   }
 
-  void _startGame() {
-    if (_room == null) return;
-    final svc = ref.read(supabaseServiceProvider);
-    final configs = _room!.players.map((p) => {
-      'name': p.name,
-      'type': PlayerType.human,
-      'avatar': '🎮',
-    }).toList();
-
-    // Determine local player index from the current user
-    final localIndex = _room!.players
-        .indexWhere((p) => p.id == svc.currentUserId);
-    final safeLocalIndex = localIndex < 0 ? 0 : localIndex;
-    final localName = configs[safeLocalIndex]['name'] as String? ?? 'Player';
-
-    // Wire incoming chat from Supabase Realtime → ChatNotifier
-    svc.onChatEvent = (json) =>
-        ref.read(chatProvider.notifier).receiveFromJson(json);
-
-    // Wire outgoing chat from ChatNotifier → Supabase broadcast
-    ref.read(chatProvider.notifier).onSend = (chatMsg) {
-      svc.broadcastChat(
-        playerName: chatMsg.playerName,
-        playerIndex: chatMsg.playerIndex,
-        content: chatMsg.content,
-        type: chatMsg.type.name,
-        messageId: chatMsg.id,
-        timestamp: chatMsg.timestamp.toIso8601String(),
-      );
+  void _subscribeToRoom(String roomId) {
+    final supabase = ref.read(supabaseServiceProvider);
+    
+    supabase.onRoomPlayersChanged = () async {
+      final players = await supabase.getRoomPlayers(roomId);
+      if (mounted) setState(() => _players = players);
+    };
+    
+    supabase.onRulesChanged = (rules) {
+      if (mounted) setState(() => _customRules = rules);
     };
 
+    supabase.onRoomStatusChanged = (status) {
+      if (status == RoomStatus.inProgress && !widget.isHost) {
+        _startGame(); // Navigate guests
+      }
+    };
+
+    supabase.subscribeToRoom(roomId);
+
+    // Initial player fetch
+    supabase.getRoomPlayers(roomId).then((p) {
+      if (mounted) setState(() => _players = p);
+    });
+
+    // Wire chat
+    ref.read(chatProvider.notifier).onSend = (chatMsg) {
+       supabase.broadcastChat(
+         playerName: chatMsg.playerName,
+         playerIndex: chatMsg.playerIndex,
+         content: chatMsg.content,
+         type: chatMsg.type.name,
+         messageId: chatMsg.id,
+         timestamp: chatMsg.timestamp.toIso8601String(),
+       );
+    };
+  }
+
+  void _updateRules(CustomRules newRules) {
+    if (!widget.isHost || _room == null) return;
+    setState(() => _customRules = newRules);
+    ref.read(supabaseServiceProvider).updateRoomRules(_room!.id, newRules);
+  }
+
+  void _startGame() async {
+    final supabase = ref.read(supabaseServiceProvider);
+    if (widget.isHost && _room != null) {
+      await supabase.updateRoomSettings(_room!.id, status: RoomStatus.inProgress);
+    }
+    
+    if (_room == null) return;
+    
+    final playerConfigs = _players.map((p) => {
+      'name': p.name,
+      'type': p.id == supabase.currentUserId ? PlayerType.human : PlayerType.remote,
+      'avatar': p.avatarEmoji,
+    }).toList();
+    
+    if (!mounted) return;
     context.pushReplacement('/game', extra: {
-      'playerConfigs': configs,
-      'gameMode': _room!.gameMode,
-      'turnTimerSeconds': _room!.turnTimer,
-      'localPlayerName': localName,
-      'localPlayerIndex': safeLocalIndex,
+      'playerConfigs': playerConfigs,
+      'gameMode': _room?.gameMode ?? GameMode.classic,
+      'turnTimerSeconds': _room?.turnTimer ?? 30,
+      'customRules': _customRules,
+      'localPlayerName': supabase.username ?? 'Player',
+      'localPlayerIndex': _players.indexWhere((p) => p.id == supabase.currentUserId),
+      'isOnline': true,
+      'roomId': _room?.id,
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.darkBg,
+      backgroundColor: AppColors.lightBg,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        title: Text(widget.isHost ? '🌐 Host Online Game' : '🌐 Join Online Game',
-            style: GoogleFonts.fredoka(color: Colors.white, fontSize: 19)),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        centerTitle: true,
+        title: Text(widget.isHost ? 'HOST LOBBY' : 'ONLINE LOBBY',
+            style: GoogleFonts.fredoka(color: AppColors.textDark, fontSize: 20, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white),
+          icon: const Icon(Icons.arrow_back_ios_rounded, color: AppColors.textDark),
           onPressed: () => context.pop(),
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Status
-            if (_statusMsg.isNotEmpty)
-              _StatusBanner(message: _statusMsg, isError: _statusMsg.startsWith('❌'))
-                  .animate().fadeIn(),
-            const SizedBox(height: 20),
+      body: _isLoading 
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                children: [
+                  _OnlineStatusBanner(message: _statusMessage),
+                  const SizedBox(height: 24),
+                  if (_room != null) _buildRoomCodeCard(_room!),
+                  const SizedBox(height: 32),
+                  const _SectionTitle(title: 'PLAYERS IN LOBBY'),
+                  const SizedBox(height: 16),
+                  ..._players.map((p) => _OnlinePlayerTile(player: p)),
+                  const SizedBox(height: 32),
+                  const _SectionTitle(title: 'GAME SETTINGS'),
+                  const SizedBox(height: 16),
+                  _buildSettingsCard(),
+                  const SizedBox(height: 48),
+                  if (widget.isHost)
+                    _buildStartButton()
+                  else
+                    _buildWaitingButton(),
+                ],
+              ),
+            ),
+    );
+  }
 
-            if (widget.isHost) ...[
-              if (_room != null) _buildHostView(),
-            ] else ...[
-              _buildJoinView(),
+  Widget _buildRoomCodeCard(OnlineRoom room) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 32),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(32),
+        boxShadow: [
+          BoxShadow(color: AppColors.primary.withValues(alpha: 0.1), blurRadius: 20, offset: const Offset(0, 8)),
+        ],
+      ),
+      child: Column(
+        children: [
+          Text('ROOM CODE', style: GoogleFonts.fredoka(fontSize: 12, color: AppColors.textMuted, fontWeight: FontWeight.bold, letterSpacing: 2)),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(room.code, style: GoogleFonts.fredoka(fontSize: 42, color: AppColors.primary, fontWeight: FontWeight.bold, letterSpacing: 4)),
+              const SizedBox(width: 16),
+              IconButton(
+                icon: const Icon(Icons.copy_rounded, color: AppColors.primary),
+                onPressed: () {
+                  Clipboard.setData(ClipboardData(text: room.code));
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('ROOM CODE COPIED!')));
+                },
+              ),
             ],
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildHostView() {
-    final room = _room!;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Room code display
-        Center(
-          child: Column(
-            children: [
-              Text('Room Code',
-                  style: GoogleFonts.nunito(fontSize: 13, color: AppColors.textMuted)),
-              const SizedBox(height: 8),
-              GestureDetector(
-                onTap: () {
-                  Clipboard.setData(ClipboardData(text: room.code));
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Code copied!',
-                          style: GoogleFonts.nunito(color: Colors.white)),
-                      backgroundColor: AppColors.darkCard,
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                    ),
-                  );
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(18),
-                    color: AppColors.primary.withValues(alpha: 0.15),
-                    border: Border.all(color: AppColors.primary, width: 2),
-                    boxShadow: [
-                      BoxShadow(
-                          color: AppColors.primary.withValues(alpha: 0.3),
-                          blurRadius: 20),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        room.code,
-                        style: GoogleFonts.fredoka(
-                          fontSize: 36,
-                          color: Colors.white,
-                          letterSpacing: 8,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      const Icon(Icons.copy_rounded,
-                          color: AppColors.textMuted, size: 20),
-                    ],
-                  ),
-                ),
-              ).animate().scale(curve: Curves.elasticOut),
-              const SizedBox(height: 8),
-              Text('Tap to copy',
-                  style: GoogleFonts.nunito(fontSize: 11, color: AppColors.textMuted)),
-            ],
-          ),
-        ),
-
-        const SizedBox(height: 28),
-
-        // Players
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text('Players (${room.players.length}/${room.maxPlayers})',
-                style: GoogleFonts.fredoka(
-                    fontSize: 17, color: Colors.white, fontWeight: FontWeight.bold)),
-            Text('Waiting for ${room.maxPlayers - room.players.length} more...',
-                style: GoogleFonts.nunito(
-                    fontSize: 12, color: AppColors.textMuted)),
-          ],
-        ),
-        const SizedBox(height: 12),
-        ...room.players.asMap().entries.map((e) => _PlayerTile(
-              player: e.value,
-              index: e.key,
-            ).animate(delay: (e.key * 60).ms).slideX(begin: -0.1)),
-
-        // Empty slots
-        ...List.generate(room.maxPlayers - room.players.length, (i) =>
-          Container(
-            margin: const EdgeInsets.only(bottom: 8),
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              color: AppColors.darkCard,
-              border: Border.all(
-                  color: AppColors.darkBorder,
-                  style: BorderStyle.solid),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.person_add_rounded,
-                    color: AppColors.textMuted, size: 20),
-                const SizedBox(width: 10),
-                Text('Waiting for player...',
-                    style: GoogleFonts.nunito(
-                        fontSize: 13, color: AppColors.textMuted)),
-              ],
-            ),
-          )),
-
-        const SizedBox(height: 28),
-
-        // Settings summary
-        Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
-            color: AppColors.darkCard,
-            border: Border.all(color: AppColors.darkBorder),
-          ),
-          child: Row(
-            children: [
-              _SettingChip('🎮', room.gameMode),
-              const SizedBox(width: 12),
-              _SettingChip('⏱️', '${room.turnTimer}s'),
-              const SizedBox(width: 12),
-              _SettingChip('👥', '${room.maxPlayers} max'),
-            ],
-          ),
-        ),
-
-        const SizedBox(height: 24),
-
-        // Invite Friends button
-        SizedBox(
-          width: double.infinity,
-          height: 46,
-          child: OutlinedButton.icon(
-            onPressed: () => context.push('/friends', extra: {
-              'roomCode': room.code,
-              'gameMode': room.gameMode,
-            }),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.primaryLight,
-              side: BorderSide(color: AppColors.primary.withValues(alpha: 0.5)),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-            ),
-            icon: const Text('📨', style: TextStyle(fontSize: 18)),
-            label: Text('Invite Friends',
-                style: GoogleFonts.fredoka(fontSize: 16, color: AppColors.primaryLight)),
-          ),
-        ).animate(delay: 200.ms).fadeIn(),
-
-        const SizedBox(height: 12),
-
-        SizedBox(
-          width: double.infinity,
-          height: 54,
-          child: ElevatedButton(
-            onPressed: room.players.length >= 2 ? _startGame : null,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: room.players.length >= 2
-                  ? AppColors.primary
-                  : AppColors.darkCard,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14)),
-              elevation: 6,
-            ),
-            child: Text(
-              room.players.length >= 2
-                  ? '🎲 Start Game'
-                  : 'Need at least 2 players',
-              style: GoogleFonts.fredoka(fontSize: 18, color: Colors.white),
-            ),
-          ),
-        ).animate(delay: 300.ms).fadeIn(),
-      ],
+  Widget _buildSettingsCard() {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(32),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 15, offset: const Offset(0, 5)),
+        ],
+      ),
+      child: Column(
+        children: [
+          _buildModeSelector(),
+          const Divider(height: 32),
+          _buildPlayerCountSelector(),
+          const Divider(height: 32),
+          _buildTimerSelector(),
+          const Divider(height: 32),
+          _ruleToggle('6 gives another turn', _customRules.sixGivesExtraTurn, (v) => _updateRules(_customRules.copyWith(sixGivesExtraTurn: v))),
+          _ruleToggle('6 brings a coin out', _customRules.sixBringsCoinOut, (v) => _updateRules(_customRules.copyWith(sixBringsCoinOut: v))),
+          _ruleToggle('Show safe cells (stars)', _customRules.safeZonesEnabled, (v) => _updateRules(_customRules.copyWith(safeZonesEnabled: v))),
+          _ruleToggle('3 consecutive 1s cuts own coin', _customRules.tripleOneKillsOwn, (v) => _updateRules(_customRules.copyWith(tripleOneKillsOwn: v))),
+          _ruleToggle('Skip a turn on 3 consecutive 1s', _customRules.tripleOneSkipsTurn, (v) => _updateRules(_customRules.copyWith(tripleOneSkipsTurn: v))),
+          _ruleToggle('3 consecutive 6s brings a coin out', _customRules.tripleSixBringsCoinOut, (v) => _updateRules(_customRules.copyWith(tripleSixBringsCoinOut: v))),
+          _ruleToggle('3 consecutive 6s forfeits turn', _customRules.tripleSixForfeit, (v) => _updateRules(_customRules.copyWith(tripleSixForfeit: v))),
+          _ruleToggle('Gains another turn on cutting a coin', _customRules.cutGrantsExtraTurn, (v) => _updateRules(_customRules.copyWith(cutGrantsExtraTurn: v))),
+          _ruleToggle('Gains another turn on reaching home', _customRules.homeGrantsExtraTurn, (v) => _updateRules(_customRules.copyWith(homeGrantsExtraTurn: v))),
+          _ruleToggle('Must cut a coin to enter home lane', _customRules.mustCutToEnterHomeLane, (v) => _updateRules(_customRules.copyWith(mustCutToEnterHomeLane: v))),
+          _ruleToggle('Must cut opponent if possible', _customRules.mustCutIfCuttable, (v) => _updateRules(_customRules.copyWith(mustCutIfCuttable: v))),
+        ],
+      ),
     );
   }
 
-  Widget _buildJoinView() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('Enter Room Code',
-            style: GoogleFonts.fredoka(
-                fontSize: 17, color: Colors.white, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 10),
-        Row(
-          children: [
-            Expanded(
-              child: TextField(
-                controller: _codeController,
-                style: GoogleFonts.fredoka(
-                    fontSize: 22, color: Colors.white, letterSpacing: 6),
-                textCapitalization: TextCapitalization.characters,
-                maxLength: 6,
-                textAlign: TextAlign.center,
-                decoration: InputDecoration(
-                  hintText: 'ABC123',
-                  hintStyle: GoogleFonts.fredoka(
-                      fontSize: 22,
-                      color: Colors.white24,
-                      letterSpacing: 6),
-                  counterText: '',
-                  filled: true,
-                  fillColor: AppColors.darkCard,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: const BorderSide(color: AppColors.darkBorder),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: const BorderSide(color: AppColors.darkBorder),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: const BorderSide(color: AppColors.primary, width: 2),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 10),
-            ElevatedButton(
-              onPressed: _isLoading ? null : _joinRoom,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 20, vertical: 17),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14)),
-              ),
-              child: _isLoading
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                          strokeWidth: 2, color: Colors.white))
-                  : Text('Join',
-                      style: GoogleFonts.fredoka(
-                          fontSize: 16, color: Colors.white)),
-            ),
-          ],
-        ),
+  Widget _buildModeSelector() {
+    return _SettingRow(
+      icon: '🏠',
+      label: 'GAME MODE',
+      value: _room?.gameMode.toUpperCase() ?? 'CLASSIC',
+      onTap: widget.isHost ? () async {
+        final newMode = _room?.gameMode == GameMode.classic ? GameMode.quick : GameMode.classic;
+        await ref.read(supabaseServiceProvider).updateRoomSettings(_room!.id, gameMode: newMode);
+        setState(() => _room = _room?.copyWith(gameMode: newMode));
+      } : null,
+    );
+  }
 
-        if (_room != null) ...[
-          const SizedBox(height: 24),
-          Text('Room Found!',
-              style: GoogleFonts.fredoka(
-                  fontSize: 17, color: AppColors.greenPlayer)),
-          const SizedBox(height: 10),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(14),
-              color: AppColors.greenPlayer.withValues(alpha: 0.1),
-              border: Border.all(
-                  color: AppColors.greenPlayer.withValues(alpha: 0.4)),
-            ),
-            child: Row(
-              children: [
-                const Text('✅', style: TextStyle(fontSize: 24)),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Hosted by ${_room!.hostName}',
-                          style: GoogleFonts.fredoka(
-                              fontSize: 15, color: Colors.white)),
-                      Text(
-                          '${_room!.players.length}/${_room!.maxPlayers} players · ${_room!.gameMode}',
-                          style: GoogleFonts.nunito(
-                              fontSize: 12, color: Colors.white60)),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ).animate().scale(curve: Curves.elasticOut),
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              color: AppColors.darkCard,
-              border: Border.all(color: AppColors.accent.withValues(alpha: 0.3)),
-            ),
-            child: Row(
-              children: [
-                const SizedBox(
-                  width: 20, height: 20,
-                  child: CircularProgressIndicator(
-                      strokeWidth: 2, color: AppColors.accent),
-                ),
-                const SizedBox(width: 10),
-                Text('Waiting for host to start the game...',
-                    style: GoogleFonts.nunito(
-                        fontSize: 13, color: Colors.white70)),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-          // Spectate option
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: () => context.push('/spectate', extra: {
-                'roomCode': _room!.code,
-              }),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.white54,
-                side: const BorderSide(color: Colors.white12),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
-                padding: const EdgeInsets.symmetric(vertical: 12),
-              ),
-              icon: const Text('👀', style: TextStyle(fontSize: 16)),
-              label: Text('Spectate Instead',
-                  style: GoogleFonts.nunito(fontSize: 13, color: Colors.white54)),
-            ),
+  Widget _buildPlayerCountSelector() {
+    return _SettingRow(
+      icon: '👥',
+      label: 'MAX PLAYERS',
+      value: '${_room?.maxPlayers ?? 4} PLAYERS',
+      onTap: widget.isHost ? () async {
+        final current = _room?.maxPlayers ?? 4;
+        final next = current == 4 ? 2 : (current + 1);
+        await ref.read(supabaseServiceProvider).updateRoomSettings(_room!.id, maxPlayers: next);
+        setState(() => _room = _room?.copyWith(maxPlayers: next));
+      } : null,
+    );
+  }
+
+  Widget _buildTimerSelector() {
+    return _SettingRow(
+      icon: '⏱️',
+      label: 'TURN TIMER',
+      value: '${_room?.turnTimer ?? 30}s',
+      onTap: widget.isHost ? () async {
+        final current = _room?.turnTimer ?? 30;
+        final next = current == 60 ? 15 : (current + 15);
+        await ref.read(supabaseServiceProvider).updateRoomSettings(_room!.id, turnTimer: next);
+        setState(() => _room = _room?.copyWith(turnTimer: next));
+      } : null,
+    );
+  }
+
+  Widget _ruleToggle(String title, bool value, ValueChanged<bool> onChanged) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(title, style: GoogleFonts.fredoka(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textDark)),
+          Switch.adaptive(
+            value: value,
+            onChanged: widget.isHost ? onChanged : null,
+            activeTrackColor: AppColors.primary.withValues(alpha: 0.5),
+            activeThumbColor: AppColors.primary,
           ),
         ],
-      ],
+      ),
+    );
+  }
+
+  Widget _buildStartButton() {
+    final canStart = _players.isNotEmpty;
+    return Container(
+      width: double.infinity,
+      height: 64,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        gradient: canStart ? const LinearGradient(colors: [AppColors.primary, Color(0xFF7B85FF)]) : null,
+        color: canStart ? null : Colors.grey[300],
+        boxShadow: canStart ? [
+          BoxShadow(color: AppColors.primary.withValues(alpha: 0.3), blurRadius: 15, offset: const Offset(0, 8)),
+        ] : [],
+      ),
+      child: ElevatedButton(
+        onPressed: canStart ? _startGame : null,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          shadowColor: Colors.transparent,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        ),
+        child: Text('START GAME', style: GoogleFonts.fredoka(fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 1.5, color: Colors.white)),
+      ),
+    );
+  }
+
+  Widget _buildWaitingButton() {
+    return Container(
+      width: double.infinity,
+      height: 64,
+      decoration: BoxDecoration(
+        color: AppColors.lightCard,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.1)),
+      ),
+      child: Center(
+        child: Text('WAITING FOR HOST...', style: GoogleFonts.fredoka(fontSize: 16, color: AppColors.primary, fontWeight: FontWeight.bold, letterSpacing: 1)),
+      ),
     );
   }
 }
 
-class _PlayerTile extends StatelessWidget {
-  final RoomPlayer player;
-  final int index;
-  const _PlayerTile({required this.player, required this.index});
-
+class _OnlineStatusBanner extends StatelessWidget {
+  final String message;
+  const _OnlineStatusBanner({required this.message});
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        color: AppColors.darkCard,
-        border: Border.all(
-            color: player.isHost
-                ? AppColors.accent.withValues(alpha: 0.4)
-                : AppColors.darkBorder),
+        color: AppColors.primary.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(player.isHost ? '👑' : '🎮',
-              style: const TextStyle(fontSize: 20)),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(player.name,
-                style: GoogleFonts.fredoka(fontSize: 15, color: Colors.white)),
+          const SizedBox(
+            width: 14, height: 14,
+            child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation(AppColors.primary)),
           ),
-          if (player.isHost)
-            const _Badge('HOST', AppColors.accent)
-          else if (player.isReady)
-            const _Badge('READY', AppColors.greenPlayer)
-          else
-            const _Badge('...', AppColors.textMuted),
+          const SizedBox(width: 12),
+          Text(message, style: GoogleFonts.fredoka(fontSize: 12, color: AppColors.primary, fontWeight: FontWeight.bold, letterSpacing: 1)),
         ],
       ),
     );
   }
 }
 
-class _Badge extends StatelessWidget {
-  final String label;
-  final Color color;
-  const _Badge(this.label, this.color);
-
+class _OnlinePlayerTile extends StatelessWidget {
+  final RoomPlayer player;
+  const _OnlinePlayerTile({required this.player});
   @override
-  Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: color.withValues(alpha: 0.4)),
-        ),
-        child: Text(label,
-            style: GoogleFonts.nunito(
-                fontSize: 10, color: color, fontWeight: FontWeight.bold)),
-      );
-}
-
-class _SettingChip extends StatelessWidget {
-  final String emoji;
-  final String label;
-  const _SettingChip(this.emoji, this.label);
-
-  @override
-  Widget build(BuildContext context) => Row(
-        mainAxisSize: MainAxisSize.min,
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppColors.lightBorder),
+      ),
+      child: Row(
         children: [
-          Text(emoji, style: const TextStyle(fontSize: 14)),
-          const SizedBox(width: 4),
-          Text(label,
-              style: GoogleFonts.nunito(fontSize: 12, color: Colors.white70)),
+          Container(
+            width: 48, height: 48,
+            decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.1), shape: BoxShape.circle),
+            child: Center(child: Text(player.avatarEmoji, style: const TextStyle(fontSize: 24))),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(player.name.toUpperCase(), style: GoogleFonts.fredoka(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textDark)),
+                Text('PLAYER', style: GoogleFonts.fredoka(fontSize: 10, color: AppColors.textMuted, fontWeight: FontWeight.bold, letterSpacing: 1)),
+              ],
+            ),
+          ),
+          if (player.isReady)
+            const Icon(Icons.check_circle, color: AppColors.success)
+          else if (player.isHost)
+            const Icon(Icons.star, color: AppColors.accent),
         ],
-      );
+      ),
+    );
+  }
 }
 
-class _StatusBanner extends StatelessWidget {
-  final String message;
-  final bool isError;
-  const _StatusBanner({required this.message, this.isError = false});
+class _SettingRow extends StatelessWidget {
+  final String icon;
+  final String label;
+  final String value;
+  final VoidCallback? onTap;
+
+  const _SettingRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+    this.onTap,
+  });
 
   @override
-  Widget build(BuildContext context) => Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          color: isError
-              ? AppColors.error.withValues(alpha: 0.1)
-              : AppColors.primary.withValues(alpha: 0.1),
-          border: Border.all(
-              color: isError
-                  ? AppColors.error.withValues(alpha: 0.3)
-                  : AppColors.primary.withValues(alpha: 0.3)),
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Padding(
+        padding: const EdgeInsets.all(8),
+        child: Row(
+          children: [
+            Text(icon, style: const TextStyle(fontSize: 24)),
+            const SizedBox(width: 16),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: GoogleFonts.fredoka(fontSize: 10, color: AppColors.textMuted, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                Text(value, style: GoogleFonts.fredoka(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.textDark)),
+              ],
+            ),
+            const Spacer(),
+            if (onTap != null)
+              Icon(Icons.chevron_right_rounded, color: AppColors.primary.withValues(alpha: 0.5)),
+          ],
         ),
-        child: Text(message,
-            style: GoogleFonts.nunito(
-                fontSize: 13,
-                color: isError ? AppColors.error : Colors.white70)),
-      );
+      ),
+    );
+  }
+}
+
+class _SectionTitle extends StatelessWidget {
+  final String title;
+  const _SectionTitle({required this.title});
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Text(title, style: GoogleFonts.fredoka(fontSize: 14, color: AppColors.textMuted, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
+    );
+  }
 }
